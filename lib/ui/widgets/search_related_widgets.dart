@@ -56,36 +56,49 @@ class ResultWidget extends StatelessWidget {
   List<Widget> generateWidgetList(
       SearchResultScreenController searchResScrController) {
     List<Widget> list = [];
-    for (dynamic item in searchResScrController.resultContent.entries) {
-      if (item.key == "Songs" || item.key == "Videos") {
+    final orderedEntries = searchResScrController.resultContent.entries.toList()
+      ..sort((a, b) =>
+          _contentSortIndex(a.key).compareTo(_contentSortIndex(b.key)));
+    for (dynamic item in orderedEntries) {
+      final key = item.key.toString();
+      if (key == "Songs" || key == "Videos") {
         list.add(SeparateTabItemWidget(
           items: List<MediaItem>.from(item.value),
-          title: item.key,
+          title: key,
           isCompleteList: false,
         ));
-      } else if (item.key == "Albums") {
+      } else if (key == "Albums") {
         list.add(ContentListWidget(
-          content: AlbumContent(
-              title: item.key, albumList: List<Album>.from(item.value)),
+          content:
+              AlbumContent(title: key, albumList: List<Album>.from(item.value)),
           isHomeContent: false,
         ));
-      } else if (item.key.toString().toLowerCase().contains("playlist")) {
+      } else if (key.toLowerCase().contains("playlist")) {
         list.add(ContentListWidget(
           content: PlaylistContent(
-            title: item.key,
+            title: key,
             playlistList: List<Playlist>.from(item.value),
           ),
           isHomeContent: false,
         ));
-      } else if (item.key.toString().contains("Artist")) {
+      } else if (key.contains("Artist")) {
         list.add(SeparateTabItemWidget(
           items: List<Artist>.from(item.value),
-          title: item.key,
+          title: key,
           isCompleteList: false,
         ));
       }
     }
 
     return list;
+  }
+
+  int _contentSortIndex(String key) {
+    if (key == "Songs") return 0;
+    if (key == "Videos") return 1;
+    if (key == "Albums") return 2;
+    if (key.toLowerCase().contains("playlist")) return 3;
+    if (key.contains("Artist")) return 4;
+    return 5;
   }
 }
