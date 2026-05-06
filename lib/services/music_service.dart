@@ -1,7 +1,6 @@
 // ignore_for_file: constant_identifier_names
 
 import 'dart:convert';
-import 'dart:math';
 import 'package:audio_service/audio_service.dart';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart' as getx;
@@ -336,9 +335,10 @@ class MusicServices extends getx.GetxService {
     }
     final data = Map.from(_context);
     data['browseId'] = browseId;
-    Map<String, dynamic> response = (await _sendRequest('browse', data)).data;
+    final Map<String, dynamic> response =
+        (await _sendRequest('browse', data)).data;
     if (playlistId != null) {
-      Map<String, dynamic> header =
+      final Map<String, dynamic> header =
           nav(response, ['header', "musicDetailHeaderRenderer"]) ??
               nav(response, [
                 'contents',
@@ -353,31 +353,24 @@ class MusicServices extends getx.GetxService {
                 "musicResponsiveHeaderRenderer"
               ]);
 
-      Map<String, dynamic> results = nav(
-            response,
-            [
-              'contents',
-              "singleColumnBrowseResultsRenderer",
-              "tabs",
-              0,
-              "tabRenderer",
-              "content",
-              'sectionListRenderer',
-              'contents',
-              0,
-              "musicPlaylistShelfRenderer"
-            ],
-          ) ??
-          nav(response, [
-            "contents",
-            "twoColumnBrowseResultsRenderer",
-            "secondaryContents",
-            "sectionListRenderer",
-            "contents",
-            0,
-            "musicPlaylistShelfRenderer",
-          ]);
-      Map<String, dynamic> playlist = {'id': results['playlistId']};
+      final Map<String, dynamic> results =
+          nav(response, musicPlaylistShelfRenderer) ??
+              nav(
+                response,
+                [
+                  'contents',
+                  "singleColumnBrowseResultsRenderer",
+                  "tabs",
+                  0,
+                  "tabRenderer",
+                  "content",
+                  'sectionListRenderer',
+                  'contents',
+                  0,
+                  "musicPlaylistShelfRenderer"
+                ],
+              );
+      final Map<String, dynamic> playlist = {'id': results['playlistId']};
 
       playlist['title'] = nav(header, title_text);
       playlist['thumbnails'] = nav(header, thumnail_cropped) ??
@@ -388,7 +381,7 @@ class MusicServices extends getx.GetxService {
             "thumbnails"
           ]);
       playlist["description"] = nav(header, description);
-      int runCount = header['subtitle']['runs'].length;
+      final int runCount = header['subtitle']['runs'].length;
       if (runCount > 1) {
         playlist['author'] = {
           'name': nav(header, subtitle2),
@@ -399,40 +392,32 @@ class MusicServices extends getx.GetxService {
         }
       }
 
-      int secondSubtitleRunCount = header['secondSubtitle']['runs'].length;
-      String count = (((header['secondSubtitle']['runs']
+      final int secondSubtitleRunCount =
+          header['secondSubtitle']['runs'].length;
+      final String count = (((header['secondSubtitle']['runs']
                       [secondSubtitleRunCount % 3]['text'])
                   .split(' ')[0])
               .split(',') as List)
           .join();
-      int songCount = int.parse(count);
+      final int songCount = int.parse(count);
       if (header['secondSubtitle']['runs'].length > 1) {
         playlist['duration'] = header['secondSubtitle']['runs']
             [(secondSubtitleRunCount % 3) + 2]['text'];
       }
       playlist['trackCount'] = songCount;
 
-      requestFunc(additionalParams) async => (await _sendRequest("browse", data,
-              additionalParams: additionalParams))
-          .data;
+      requestFuncContinuation(cont) async =>
+          (await _sendRequest("browse", {...data, ...cont})).data;
 
       if (songCount > 0) {
         playlist['tracks'] = parsePlaylistItems(results['contents']);
         limit = songCount;
-        var songsToGet = min(limit, songCount);
-
         List<dynamic> parseFunc(contents) => parsePlaylistItems(contents);
-        if (results.containsKey('continuations')) {
-          playlist['tracks'] = [
-            ...(playlist['tracks']),
-            ...(await getContinuations(
-                results,
-                'musicPlaylistShelfContinuation',
-                songsToGet - (playlist['tracks']).length as int,
-                requestFunc,
-                parseFunc))
-          ];
-        }
+        playlist['tracks'] = [
+          ...(playlist['tracks']),
+          ...(await getContinuationsPlaylist(
+              results, limit, requestFuncContinuation, parseFunc))
+        ];
       }
       playlist['duration_seconds'] = sumTotalDuration(playlist);
       return playlist;

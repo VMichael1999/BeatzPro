@@ -131,6 +131,15 @@ const List<dynamic> thumnail_cropped = [
 const subtitle = ['subtitle', 'runs', 0, 'text'];
 const subtitle3 = ['subtitle', 'runs', 4, 'text'];
 const feedback_token = ['feedbackEndpoint', 'feedbackToken'];
+const musicPlaylistShelfRenderer = [
+  "contents",
+  "twoColumnBrowseResultsRenderer",
+  "secondaryContents",
+  "sectionListRenderer",
+  "contents",
+  0,
+  "musicPlaylistShelfRenderer",
+];
 
 List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
   List<Map<String, dynamic>> items = [];
@@ -473,10 +482,10 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
       continue;
     }
     dynamic data = result['musicResponsiveListItemRenderer'];
-    dynamic videoId;
+    dynamic videoId = nav(data, ['playlistItemData', 'videoId']);
 
     // if the item has a menu, find its setVideoId
-    if (data.containsKey('menu')) {
+    if (videoId == null && data.containsKey('menu')) {
       for (dynamic item in nav(data, menu_items)) {
         if (item.containsKey('menuServiceItemRenderer')) {
           dynamic menuService = nav(item, menu_service);
@@ -492,7 +501,7 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
     }
 
     // if item is not playable, the videoId was retrieved above
-    if (nav(data, play_button) != null) {
+    if (videoId == null && nav(data, play_button) != null) {
       if (nav(data, play_button).containsKey('playNavigationEndpoint')) {
         videoId = nav(data, play_button)['playNavigationEndpoint']
             ['watchEndpoint']['videoId'];
