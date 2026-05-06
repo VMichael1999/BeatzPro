@@ -56,8 +56,8 @@ class MyApp extends StatelessWidget {
           debugShowCheckedModeBanner: false,
           translations: Languages(),
           locale: Locale(
-              Hive.box("AppPrefs").get('currentAppLanguageCode') ?? "en"),
-          fallbackLocale: const Locale("en"),
+              Hive.box("AppPrefs").get('currentAppLanguageCode') ?? "es"),
+          fallbackLocale: const Locale("es"),
           builder: (context, child) {
             final scale = MediaQuery.of(context)
                 .textScaler
@@ -115,7 +115,12 @@ void _setAppInitPrefs() {
       'themePrimaryColor': 4278199603,
       'discoverContentType': "QP",
       'newVersionVisibility': updateCheckFlag,
-      "cacheHomeScreenData": true
+      "cacheHomeScreenData": true,
+      'currentAppLanguageCode': "es",
+      'contentLanguage': "es"
     });
   }
+  appPrefs.put(
+      'currentAppLanguageCode', appPrefs.get('currentAppLanguageCode') ?? "es");
+  appPrefs.put('contentLanguage', appPrefs.get('contentLanguage') ?? "es");
 }

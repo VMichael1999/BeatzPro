@@ -16,6 +16,12 @@ class ContentListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
+    final itemCount =
+        isAlbumContent ? content.albumList.length : content.playlistList.length;
+
+    if (itemCount == 0) {
+      return const SizedBox.shrink();
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
@@ -67,16 +73,14 @@ class ContentListWidget extends StatelessWidget {
           ),
           const SizedBox(height: 10),
           SizedBox(
-            height: 200,
+            height: 218,
             child: ListView.separated(
               addAutomaticKeepAlives: false,
               addRepaintBoundaries: false,
               physics: const BouncingScrollPhysics(),
               separatorBuilder: (context, index) => const SizedBox(width: 15),
               scrollDirection: Axis.horizontal,
-              itemCount: isAlbumContent
-                  ? content.albumList.length
-                  : content.playlistList.length,
+              itemCount: itemCount,
               itemBuilder: (context, index) {
                 final item = isAlbumContent
                     ? content.albumList[index]
