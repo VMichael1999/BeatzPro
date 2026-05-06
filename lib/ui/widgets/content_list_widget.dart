@@ -3,6 +3,7 @@ import 'package:get/get.dart';
 
 import '../screens/Search/search_result_screen_controller.dart';
 import '/ui/widgets/content_list_widget_item.dart';
+import '/ui/widgets/premium_surface.dart';
 
 class ContentListWidget extends StatelessWidget {
   ///ContentListWidget is used to render a section of Content like a list of Albums or Playlists in HomeScreen
@@ -20,8 +21,8 @@ class ContentListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
-    // ignore: avoid_unnecessary_containers
-    return Container(
+    return Padding(
+      padding: const EdgeInsets.only(right: 18, bottom: 22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -34,7 +35,10 @@ class ContentListWidget extends StatelessWidget {
                       ? "${content.title.substring(0, 12)}..."
                       : content.title,
                   //maxLines: 2,
-                  style: Theme.of(context).textTheme.titleLarge,
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge!
+                      .copyWith(fontSize: 22),
                 ),
                 !isHomeContent
                     ? TextButton(
@@ -49,9 +53,9 @@ class ContentListWidget extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 5),
+          const SizedBox(height: 12),
           SizedBox(
-            height: 200,
+            height: 218,
             //color: Colors.blueAccent,
             child: Scrollbar(
               thickness: GetPlatform.isDesktop ? null : 0,
@@ -62,7 +66,7 @@ class ContentListWidget extends StatelessWidget {
                   addRepaintBoundaries: false, //on this
                   physics: const BouncingScrollPhysics(),
                   separatorBuilder: (context, index) => const SizedBox(
-                        width: 15,
+                        width: 12,
                       ),
                   scrollDirection: Axis.horizontal,
                   itemCount: isAlbumContent
@@ -70,10 +74,19 @@ class ContentListWidget extends StatelessWidget {
                       : content.playlistList.length,
                   itemBuilder: (_, index) {
                     if (isAlbumContent) {
-                      return ContentListItem(content: content.albumList[index]);
+                      return PremiumGlass(
+                        padding: const EdgeInsets.all(10),
+                        borderRadius: 24,
+                        child:
+                            ContentListItem(content: content.albumList[index]),
+                      );
                     }
-                    return ContentListItem(
-                        content: content.playlistList[index]);
+                    return PremiumGlass(
+                      padding: const EdgeInsets.all(10),
+                      borderRadius: 24,
+                      child:
+                          ContentListItem(content: content.playlistList[index]),
+                    );
                   }),
             ),
           ),

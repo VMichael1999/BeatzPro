@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hive/hive.dart';
 import 'package:palette_generator/palette_generator.dart';
+import '/ui/widgets/premium_surface.dart';
 import '/utils/helper.dart';
 
 class ThemeController extends GetxController {
@@ -182,14 +183,20 @@ class ThemeController extends GetxController {
       final baseTheme = ThemeData(
           useMaterial3: false,
           brightness: Brightness.dark,
-          canvasColor: Colors.black,
-          primaryColor: Colors.black,
-          primaryColorDark: Colors.black,
-          primaryColorLight: Colors.grey[850],
+          scaffoldBackgroundColor: PremiumColors.ink,
+          canvasColor: PremiumColors.ink,
+          primaryColor: PremiumColors.ink,
+          primaryColorDark: PremiumColors.ink,
+          primaryColorLight: PremiumColors.graphite,
+          cardColor: PremiumColors.graphite,
           colorScheme: ColorScheme.fromSwatch(
-              accentColor: Colors.grey[700], brightness: Brightness.dark),
+                  accentColor: PremiumColors.violet,
+                  brightness: Brightness.dark)
+              .copyWith(
+                  secondary: PremiumColors.violet,
+                  surface: PremiumColors.graphite),
           progressIndicatorTheme: ProgressIndicatorThemeData(
-              color: Colors.grey[700], linearTrackColor: Colors.white),
+              color: PremiumColors.blue, linearTrackColor: Colors.white24),
           textTheme: const TextTheme(
               titleLarge: TextStyle(
                 fontSize: 23,
@@ -205,9 +212,9 @@ class ThemeController extends GetxController {
               ),
               labelSmall: TextStyle(
                   fontSize: 15, letterSpacing: 0, fontWeight: FontWeight.bold),
-              bodyMedium: TextStyle(color: Colors.grey)),
+              bodyMedium: TextStyle(color: PremiumColors.muted)),
           navigationRailTheme: const NavigationRailThemeData(
-              backgroundColor: Colors.black,
+              backgroundColor: PremiumColors.ink,
               selectedIconTheme: IconThemeData(
                 color: Colors.white,
               ),
@@ -219,14 +226,15 @@ class ThemeController extends GetxController {
               unselectedLabelTextStyle: TextStyle(
                   color: Colors.white38, fontWeight: FontWeight.bold)),
           bottomSheetTheme: const BottomSheetThemeData(
-              backgroundColor: Colors.black, modalBarrierColor: Colors.black),
+              backgroundColor: PremiumColors.graphite,
+              modalBarrierColor: Colors.black87),
           sliderTheme: const SliderThemeData(
             //base bar color
-            inactiveTrackColor: Colors.white30,
+            inactiveTrackColor: Colors.white24,
             //buffered progress
-            activeTrackColor: Colors.white,
+            activeTrackColor: PremiumColors.blue,
             //progress bar color
-            valueIndicatorColor: Colors.black38,
+            valueIndicatorColor: Colors.white30,
             thumbColor: Colors.white,
           ),
           textSelectionTheme: TextSelectionThemeData(

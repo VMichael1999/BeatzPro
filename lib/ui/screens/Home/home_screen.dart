@@ -11,6 +11,8 @@ import '../Search/search_screen.dart';
 import '../Settings/settings_screen_controller.dart';
 import '/ui/player/player_controller.dart';
 import '/ui/widgets/create_playlist_dialog.dart';
+import '/ui/widgets/image_widget.dart';
+import '/ui/widgets/premium_surface.dart';
 import '../../navigator.dart';
 import '../../widgets/content_list_widget.dart';
 import '../../widgets/quickpickswidget.dart';
@@ -85,16 +87,18 @@ class HomeScreen extends StatelessWidget {
                     ),
               //const VerticalDivider(thickness: 1, width: 2),
               Expanded(
-                child: Obx(() => AnimatedScreenTransition(
-                    enabled: settingsScreenController
-                        .isTransitionAnimationDisabled.isFalse,
-                    resverse: homeScreenController.reverseAnimationtransiton,
-                    horizontalTransition:
-                        settingsScreenController.isBottomNavBarEnabled.isTrue,
-                    child: Center(
-                      key: ValueKey<int>(homeScreenController.tabIndex.value),
-                      child: const Body(),
-                    ))),
+                child: PremiumBackdrop(
+                  child: Obx(() => AnimatedScreenTransition(
+                      enabled: settingsScreenController
+                          .isTransitionAnimationDisabled.isFalse,
+                      resverse: homeScreenController.reverseAnimationtransiton,
+                      horizontalTransition:
+                          settingsScreenController.isBottomNavBarEnabled.isTrue,
+                      child: Center(
+                        key: ValueKey<int>(homeScreenController.tabIndex.value),
+                        child: const Body(),
+                      ))),
+                ),
               ),
             ],
           ),
@@ -198,6 +202,7 @@ class Body extends StatelessWidget {
                         final items = homeScreenController
                                 .isContentFetched.value
                             ? [
+                                const _FeaturedNowPlayingCard(),
                                 Obx(() {
                                   final scrollController = ScrollController();
                                   homeScreenController.contentScrollControllers
@@ -275,5 +280,88 @@ class Body extends StatelessWidget {
         })
         .whereType<Widget>()
         .toList();
+  }
+}
+
+class _FeaturedNowPlayingCard extends StatelessWidget {
+  const _FeaturedNowPlayingCard();
+
+  @override
+  Widget build(BuildContext context) {
+    final playerController = Get.find<PlayerController>();
+    return Obx(() {
+      final song = playerController.currentSong.value;
+      return PremiumGlass(
+        margin: const EdgeInsets.only(right: 20, bottom: 24),
+        padding: const EdgeInsets.all(18),
+        child: Row(
+          children: [
+            song != null
+                ? ImageWidget(song: song, size: 104)
+                : Container(
+                    width: 104,
+                    height: 104,
+                    decoration: BoxDecoration(
+                      gradient: PremiumColors.accentGradient,
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    child: const Icon(Icons.music_note,
+                        color: Colors.white, size: 42),
+                  ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    "Now playing",
+                    style: Theme.of(context).textTheme.titleSmall!.copyWith(
+                          color: PremiumColors.blue,
+                          fontWeight: FontWeight.w700,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    song?.title ?? "BeatzPro",
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge!
+                        .copyWith(fontSize: 24),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    song?.artist ?? "Premium music experience",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium!
+                        .copyWith(color: PremiumColors.muted),
+                  ),
+                  const SizedBox(height: 14),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(99),
+                    child: const LinearProgressIndicator(
+                      minHeight: 4,
+                      value: 0.42,
+                      color: PremiumColors.blue,
+                      backgroundColor: Colors.white12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            GradientIconButton(
+              icon: Icons.play_arrow_rounded,
+              onPressed: song == null ? null : playerController.playPause,
+              size: 52,
+            )
+          ],
+        ),
+      );
+    });
   }
 }

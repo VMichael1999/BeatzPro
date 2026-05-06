@@ -5,6 +5,7 @@ import 'package:ionicons/ionicons.dart';
 import 'package:widget_marquee/widget_marquee.dart';
 
 import '/ui/player/components/animated_play_button.dart';
+import '/ui/widgets/premium_surface.dart';
 import '../player_controller.dart';
 
 class PlayerControlWidget extends StatelessWidget {
@@ -52,7 +53,10 @@ class PlayerControlWidget extends StatelessWidget {
                                 ? playerController.currentSong.value!.title
                                 : "NA",
                             textAlign: TextAlign.start,
-                            style: Theme.of(context).textTheme.labelMedium!,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelMedium!
+                                .copyWith(fontSize: 26),
                           ),
                         ),
                         const SizedBox(
@@ -68,7 +72,10 @@ class PlayerControlWidget extends StatelessWidget {
                                 : "NA",
                             textAlign: TextAlign.start,
                             overflow: TextOverflow.ellipsis,
-                            style: Theme.of(context).textTheme.labelSmall,
+                            style: Theme.of(context)
+                                .textTheme
+                                .labelSmall!
+                                .copyWith(color: PremiumColors.muted),
                           ),
                         )
                       ],
@@ -94,12 +101,11 @@ class PlayerControlWidget extends StatelessWidget {
           ),
           GetX<PlayerController>(builder: (controller) {
             return ProgressBar(
-              thumbRadius: 7,
-              barHeight: 4.5,
-              baseBarColor: Theme.of(context).sliderTheme.inactiveTrackColor,
-              bufferedBarColor:
-                  Theme.of(context).sliderTheme.valueIndicatorColor,
-              progressBarColor: Theme.of(context).sliderTheme.activeTrackColor,
+              thumbRadius: 6,
+              barHeight: 5,
+              baseBarColor: Colors.white12,
+              bufferedBarColor: Colors.white24,
+              progressBarColor: PremiumColors.blue,
               thumbColor: Theme.of(context).sliderTheme.thumbColor,
               timeLabelTextStyle: Theme.of(context)
                   .textTheme
@@ -128,7 +134,22 @@ class PlayerControlWidget extends StatelessWidget {
                                 .withOpacity(0.2),
                       ))),
               _previousButton(playerController, context),
-              const CircleAvatar(radius: 35, child: AnimatedPlayButton(key: Key("playButton"),)),
+              Container(
+                height: 78,
+                width: 78,
+                decoration: BoxDecoration(
+                  gradient: PremiumColors.accentGradient,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: PremiumColors.violet.withOpacity(0.45),
+                      blurRadius: 30,
+                      offset: const Offset(0, 12),
+                    )
+                  ],
+                ),
+                child: const AnimatedPlayButton(key: Key("playButton")),
+              ),
               _nextButton(playerController, context),
               Obx(() {
                 return IconButton(
@@ -148,7 +169,6 @@ class PlayerControlWidget extends StatelessWidget {
           ),
         ]);
   }
-
 
   Widget _previousButton(
       PlayerController playerController, BuildContext context) {
