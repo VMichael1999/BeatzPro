@@ -126,7 +126,7 @@ class ListWidget extends StatelessWidget {
           style: Theme.of(context).textTheme.titleSmall,
         ),
         trailing: SizedBox(
-          width: Get.size.width > 800 ? 80 : 40,
+          width: Get.size.width > 800 ? 80 : 58,
           child: Row(
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
@@ -160,6 +160,8 @@ class ListWidget extends StatelessWidget {
                         : const SizedBox.shrink()),
                   Text(
                     items[index].extras!['length'] ?? "",
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.titleSmall,
                   ),
                 ],
