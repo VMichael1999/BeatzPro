@@ -11,13 +11,13 @@ class BottomNavBar extends StatelessWidget {
     final homeScreenController = Get.find<HomeScreenController>();
     return Obx(() => Container(
           decoration: BoxDecoration(
-            color: PremiumColors.ink.withOpacity(0.92),
+            color: Colors.black.withOpacity(0.72),
             border:
                 Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
             boxShadow: [
               BoxShadow(
-                color: PremiumColors.violet.withOpacity(0.18),
-                blurRadius: 24,
+                color: PremiumColors.violet.withOpacity(0.12),
+                blurRadius: 18,
                 offset: const Offset(0, -8),
               )
             ],
@@ -27,7 +27,7 @@ class BottomNavBar extends StatelessWidget {
                   homeScreenController.onBottonBarTabSelected,
               selectedIndex: homeScreenController.tabIndex.toInt(),
               backgroundColor: Colors.transparent,
-              indicatorColor: PremiumColors.violet.withOpacity(0.22),
+              indicatorColor: PremiumColors.violet.withOpacity(0.16),
               labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               destinations: [
                 NavigationDestination(

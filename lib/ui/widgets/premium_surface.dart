@@ -3,18 +3,18 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class PremiumColors {
-  static const ink = Color(0xFF12071F);
-  static const graphite = Color(0xFF1C0E2B);
-  static const panel = Color(0xFF241333);
-  static const violet = Color(0xFF7A2CFF);
-  static const blue = Color(0xFF1C7CFF);
-  static const red = Color(0xFFFF007A);
-  static const muted = Color(0xFFB8A8CC);
+  static const ink = Color(0xFF050507);
+  static const graphite = Color(0xFF111015);
+  static const panel = Color(0xEE15121D);
+  static const violet = Color(0xFFB58AF7);
+  static const blue = Color(0xFF8DA2FF);
+  static const red = Color(0xFFE8A7D8);
+  static const muted = Color(0xFFC9BDD5);
 
   static const accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [red, violet, blue],
+    colors: [Color(0xFFF1B6E7), Color(0xFFBCA4FF), Color(0xFF8AA3FF)],
   );
 }
 
@@ -31,11 +31,7 @@ class PremiumBackdrop extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [
-            Color(0xFF4A2D63),
-            Color(0xFF1D0E2F),
-            Color(0xFF0B0614),
-          ],
+          colors: [Color(0xFF7F588B), Color(0xFF291E34), Color(0xFF050507)],
         ),
       ),
       child: Stack(
@@ -43,12 +39,12 @@ class PremiumBackdrop extends StatelessWidget {
           Positioned(
             right: -80,
             top: 100,
-            child: _Glow(color: PremiumColors.blue.withOpacity(0.16)),
+            child: _Glow(color: PremiumColors.blue.withOpacity(0.10)),
           ),
           Positioned(
             left: -110,
             bottom: 80,
-            child: _Glow(color: PremiumColors.red.withOpacity(0.18)),
+            child: _Glow(color: PremiumColors.red.withOpacity(0.12)),
           ),
           child,
         ],
@@ -79,9 +75,9 @@ class PremiumGlass extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: PremiumColors.red.withOpacity(0.18),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
+            color: Colors.black.withOpacity(0.55),
+            blurRadius: 28,
+            offset: const Offset(0, 18),
           ),
           const BoxShadow(
             color: Colors.black54,
@@ -99,7 +95,7 @@ class PremiumGlass extends StatelessWidget {
             decoration: BoxDecoration(
               color: PremiumColors.panel,
               borderRadius: BorderRadius.circular(borderRadius),
-              border: Border.all(color: Colors.white.withOpacity(0.08)),
+              border: Border.all(color: Colors.white.withOpacity(0.10)),
             ),
             child: child,
           ),
@@ -134,20 +130,16 @@ class NeonDiscFrame extends StatelessWidget {
               shape: BoxShape.circle,
               gradient: const SweepGradient(
                 colors: [
-                  PremiumColors.red,
-                  PremiumColors.violet,
-                  PremiumColors.blue,
-                  PremiumColors.red,
+                  Color(0x66FFFFFF),
+                  Color(0x22FFFFFF),
+                  Color(0x77D9B8FF),
+                  Color(0x66FFFFFF),
                 ],
               ),
               boxShadow: [
                 BoxShadow(
-                  color: PremiumColors.red.withOpacity(0.35),
-                  blurRadius: 28,
-                ),
-                BoxShadow(
-                  color: PremiumColors.blue.withOpacity(0.22),
-                  blurRadius: 36,
+                  color: PremiumColors.violet.withOpacity(0.22),
+                  blurRadius: 40,
                 ),
               ],
             ),
@@ -155,34 +147,43 @@ class NeonDiscFrame extends StatelessWidget {
           Container(
             height: size - 10,
             width: size - 10,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: PremiumColors.ink,
+              color: Colors.white.withOpacity(0.10),
+              border: Border.all(color: Colors.white.withOpacity(0.35)),
             ),
           ),
           SizedBox(
-            height: size - 46,
-            width: size - 46,
+            height: size - 82,
+            width: size - 82,
             child: child,
           ),
-          Positioned(
-            right: 5,
-            top: size * 0.35,
-            child: Container(
-              height: 11,
-              width: 11,
-              decoration: BoxDecoration(
-                color: PremiumColors.blue,
-                shape: BoxShape.circle,
-                boxShadow: [
-                  BoxShadow(
-                    color: PremiumColors.blue.withOpacity(0.85),
-                    blurRadius: 12,
-                  )
-                ],
-              ),
-            ),
+        ],
+      ),
+    );
+  }
+}
+
+class FrostedTabBar extends StatelessWidget {
+  const FrostedTabBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return PremiumGlass(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+      borderRadius: 22,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: const [
+          Icon(Icons.home_outlined, size: 18),
+          Icon(Icons.queue_music_rounded, size: 18),
+          CircleAvatar(
+            radius: 13,
+            backgroundColor: PremiumColors.violet,
+            child: Icon(Icons.music_note, size: 15, color: Colors.white),
           ),
+          Icon(Icons.equalizer_rounded, size: 18),
+          Icon(Icons.person_outline_rounded, size: 18),
         ],
       ),
     );

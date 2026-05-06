@@ -25,7 +25,7 @@ class StandardPlayer extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final PlayerController playerController = Get.find<PlayerController>();
 
-    double playerArtImageSize = size.width - 96;
+    double playerArtImageSize = size.width - 58;
     final spaceAvailableForArtImage =
         size.height - (70 + Get.mediaQuery.padding.bottom + 330);
     playerArtImageSize = playerArtImageSize > spaceAvailableForArtImage
@@ -124,7 +124,7 @@ class StandardPlayer extends StatelessWidget {
                 Column(
                     children: [
                       /// Work as top padding depending on the lyrics visibility and screen size
-                      SizedBox(height: size.height < 750 ? 70 : 96),
+                      SizedBox(height: size.height < 750 ? 46 : 70),
 
                       /// Contains the lyrics switch and album art with lyrics
                       Column(
@@ -138,26 +138,36 @@ class StandardPlayer extends StatelessWidget {
                                 size: playerArtImageSize,
                                 child: AlbumArtNLyrics(
                                     playerArtImageSize:
-                                        playerArtImageSize - 46),
+                                        playerArtImageSize - 82),
                               )),
                         ],
                       ),
 
                       /// Extra space container
-                      const SizedBox(height: 22),
-                      const AudioVisualizer(),
-                      const Spacer(),
+                      Text(
+                        "3:23",
+                        style: Theme.of(context)
+                            .textTheme
+                            .titleSmall!
+                            .copyWith(color: Colors.white70),
+                      ),
+                      const SizedBox(height: 18),
 
                       /// Contains the player controls
                       Padding(
                         padding: EdgeInsets.only(
-                            bottom: 80 + Get.mediaQuery.padding.bottom),
+                            bottom: 12 + Get.mediaQuery.padding.bottom),
                         child: const PremiumGlass(
-                          padding: EdgeInsets.all(22),
+                          padding: EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 16),
+                          borderRadius: 24,
                           child: SizedBox(
                               width: 500, child: PlayerControlWidget()),
                         ),
-                      )
+                      ),
+                      const SizedBox(height: 14),
+                      const SizedBox(width: 260, child: FrostedTabBar()),
+                      SizedBox(height: Get.mediaQuery.padding.bottom + 6),
                     ],
                   ),
           ),

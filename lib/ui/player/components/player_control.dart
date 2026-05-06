@@ -56,7 +56,7 @@ class PlayerControlWidget extends StatelessWidget {
                             style: Theme.of(context)
                                 .textTheme
                                 .labelMedium!
-                                .copyWith(fontSize: 26),
+                                .copyWith(fontSize: 22),
                           ),
                         ),
                         const SizedBox(
@@ -96,13 +96,11 @@ class PlayerControlWidget extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(
-            height: 20,
-          ),
+          const SizedBox(height: 14),
           GetX<PlayerController>(builder: (controller) {
             return ProgressBar(
-              thumbRadius: 6,
-              barHeight: 5,
+              thumbRadius: 4,
+              barHeight: 3,
               baseBarColor: Colors.white12,
               bufferedBarColor: Colors.white24,
               progressBarColor: PremiumColors.blue,
@@ -110,7 +108,7 @@ class PlayerControlWidget extends StatelessWidget {
               timeLabelTextStyle: Theme.of(context)
                   .textTheme
                   .titleMedium!
-                  .copyWith(fontSize: 14),
+                  .copyWith(fontSize: 11, color: Colors.white60),
               progress: controller.progressBarStatus.value.current,
               total: controller.progressBarStatus.value.total,
               buffered: controller.progressBarStatus.value.buffered,
@@ -135,8 +133,8 @@ class PlayerControlWidget extends StatelessWidget {
                       ))),
               _previousButton(playerController, context),
               Container(
-                height: 78,
-                width: 78,
+                height: 58,
+                width: 58,
                 decoration: BoxDecoration(
                   gradient: PremiumColors.accentGradient,
                   shape: BoxShape.circle,
