@@ -69,7 +69,7 @@ class ResultWidget extends StatelessWidget {
               title: item.key, albumList: List<Album>.from(item.value)),
           isHomeContent: false,
         ));
-      } else if (item.key.contains("playlist")) {
+      } else if (item.key.toString().toLowerCase().contains("playlist")) {
         list.add(ContentListWidget(
           content: PlaylistContent(
             title: item.key,
@@ -77,7 +77,7 @@ class ResultWidget extends StatelessWidget {
           ),
           isHomeContent: false,
         ));
-      } else if (item.key.contains("Artist")) {
+      } else if (item.key.toString().contains("Artist")) {
         list.add(SeparateTabItemWidget(
           items: List<Artist>.from(item.value),
           title: item.key,

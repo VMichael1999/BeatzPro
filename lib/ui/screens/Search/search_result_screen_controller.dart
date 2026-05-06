@@ -108,6 +108,7 @@ class SearchResultScreenController extends GetxController
             "Artists"
           ]).contains(element));
       railItems.value = List<String>.from(allKeys);
+      await _loadPreviewContentForEmptySections();
       final len =
           railItems.where((element) => element.contains("playlists")).length;
       final calH = 30 + (railItems.length + 1 - len) * 123 + len * 150.0;
@@ -141,6 +142,32 @@ class SearchResultScreenController extends GetxController
         });
       }
       isResultContentFetced.value = true;
+    }
+  }
+
+  Future<void> _loadPreviewContentForEmptySections() async {
+    final searchEndpoint = resultContent['searchEndpoint'];
+    if (searchEndpoint is! Map) return;
+
+    for (final tabName in railItems) {
+      if (tabName == "Songs" || tabName == "Videos" || tabName == "Artists") {
+        continue;
+      }
+      final currentValue = resultContent[tabName];
+      final hasItems = currentValue is List && currentValue.isNotEmpty;
+      final filterParams = searchEndpoint[tabName];
+      if (hasItems || filterParams == null) continue;
+
+      final response = await musicServices.search(
+        queryString.value,
+        filter: tabName.replaceAll(" ", "_").toLowerCase(),
+        limit: 10,
+        filterParams: filterParams,
+      );
+      if (response[tabName] is List) {
+        resultContent[tabName] = response[tabName];
+        additionalParamNext[tabName] = response['params'];
+      }
     }
   }
 
