@@ -64,9 +64,10 @@ class MusicServices extends getx.GetxService {
     _headers['X-Goog-Visitor-Id'] = 'CgszaE1mUm55NHNwayjXiamfBg%3D%3D';
     _yt = YoutubeExplode();
     final appPrefsBox = Hive.box('AppPrefs');
+    hlCode = appPrefsBox.get('contentLanguage') ?? "en";
     if (appPrefsBox.containsKey('visitorId')) {
       final visitorData = appPrefsBox.get("visitorId");
-      if (!isExpired(epoch: visitorData['exp'])) {
+      if (visitorData != null && !isExpired(epoch: visitorData['exp'])) {
         _headers['X-Goog-Visitor-Id'] = visitorData['id'];
         appPrefsBox.put("visitorId", {
           'id': visitorData['id'],
@@ -76,17 +77,22 @@ class MusicServices extends getx.GetxService {
         return;
       }
     }
-    var visitorId = await genrateVisitorId();
+    final visitorId = await genrateVisitorId();
     if (visitorId != null) {
       _headers['X-Goog-Visitor-Id'] = visitorId;
       printINFO("New Visitor id generated ($visitorId)");
-    } else {
-      visitorId = await genrateVisitorId();
+      appPrefsBox.put("visitorId", {
+        'id': visitorId,
+        'exp': DateTime.now().millisecondsSinceEpoch ~/ 1000 + 2592000
+      });
+      return;
     }
-    appPrefsBox.put("visitorId", {
-      'id': visitorId,
-      'exp': DateTime.now().millisecondsSinceEpoch ~/ 1000 + 2592000
-    });
+    _headers['X-Goog-Visitor-Id'] =
+        "CgttN24wcmd5UzNSWSi2lvq2BjIKCgJKUBIEGgAgYQ%3D%3D";
+  }
+
+  set hlCode(String code) {
+    _context['context']['client']['hl'] = code;
   }
 
   Future<String?> genrateVisitorId() async {
