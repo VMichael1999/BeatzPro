@@ -657,7 +657,7 @@ class MusicServices extends getx.GetxService {
         if (filter == null) {
           for (var item in mixedItems) {
             final itemType = item.runtimeType == MediaItem
-                ? "${item.artist.split(",")[0]}s"
+                ? _mediaItemSearchSection(item)
                 : "${item.runtimeType}s";
             if (searchResults.containsKey(itemType) &&
                 (searchResults[itemType]).length < 3) {
@@ -716,6 +716,13 @@ class MusicServices extends getx.GetxService {
     }
 
     return searchResults;
+  }
+
+  String _mediaItemSearchSection(MediaItem item) {
+    final resultType = item.extras?['resultType'];
+    if (resultType == 'video') return 'Videos';
+    if (resultType == 'song') return 'Songs';
+    return "${item.artist?.split(",").first ?? "Song"}s";
   }
 
   Future<Map<String, dynamic>> getSearchContinuation(Map additionalParamsNext,

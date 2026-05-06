@@ -35,7 +35,10 @@ class MediaItemBuilder {
           'length': json['length'],
           'album': album,
           'artists': json['artists'],
-          'date': json['date']
+          'date': json['date'],
+          'resultType': json['resultType'],
+          'category': json['category'],
+          'videoType': json['videoType'],
         });
   }
 
@@ -66,6 +69,9 @@ class MediaItemBuilder {
         'length': mediaItem.extras!['length'],
         'duration': mediaItem.duration?.inSeconds,
         'date': mediaItem.extras!['date'],
+        'resultType': mediaItem.extras?['resultType'],
+        'category': mediaItem.extras?['category'],
+        'videoType': mediaItem.extras?['videoType'],
         'thumbnails': [
           {'url': mediaItem.artUri.toString()}
         ],
