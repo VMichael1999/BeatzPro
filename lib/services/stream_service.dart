@@ -19,6 +19,12 @@ class StreamProvider {
     try {
       final res = await yt.videos.streamsClient.getManifest(videoId);
       final audio = res.audioOnly;
+      if (audio.isEmpty) {
+        return StreamProvider(
+          playable: false,
+          statusMSG: "No audio stream available",
+        );
+      }
       return StreamProvider(
         playable: true,
         statusMSG: "OK",
@@ -58,15 +64,36 @@ class StreamProvider {
     }
   }
 
-  Audio? get highestQualityAudio => audioFormats?.lastWhere(
-        (item) => item.itag == 251 || item.itag == 140,
-        orElse: () => audioFormats!.first,
-      );
+  Audio? get highestQualityAudio =>
+      audioFormats == null || audioFormats!.isEmpty
+          ? null
+          : audioFormats!.lastWhere(
+              (item) => item.itag == 251 || item.itag == 140,
+              orElse: () => audioFormats!.first,
+            );
 
-  Audio? get lowQualityAudio => audioFormats?.lastWhere(
-        (item) => item.itag == 249 || item.itag == 139,
-        orElse: () => audioFormats!.first,
-      );
+  Audio? get highestBitrateMp4aAudio =>
+      audioFormats == null || audioFormats!.isEmpty
+          ? null
+          : audioFormats!.lastWhere(
+              (item) => item.itag == 140 || item.itag == 139,
+              orElse: () => audioFormats!.first,
+            );
+
+  Audio? get highestBitrateOpusAudio =>
+      audioFormats == null || audioFormats!.isEmpty
+          ? null
+          : audioFormats!.lastWhere(
+              (item) => item.itag == 251 || item.itag == 250,
+              orElse: () => audioFormats!.first,
+            );
+
+  Audio? get lowQualityAudio => audioFormats == null || audioFormats!.isEmpty
+      ? null
+      : audioFormats!.lastWhere(
+          (item) => item.itag == 249 || item.itag == 139,
+          orElse: () => audioFormats!.first,
+        );
 
   List<String>? get legacyUrlList {
     if (!playable || audioFormats == null || audioFormats!.isEmpty) {
@@ -97,6 +124,28 @@ class Audio {
     required this.url,
     required this.size,
   });
+
+  Map<String, dynamic> toJson() => {
+        "itag": itag,
+        "audioCodec": audioCodec.toString(),
+        "bitrate": bitrate,
+        "loudnessDb": loudnessDb,
+        "url": url,
+        "approxDurationMs": duration,
+        "size": size,
+      };
+
+  factory Audio.fromJson(json) => Audio(
+        audioCodec: (json["audioCodec"] as String).contains("mp4a")
+            ? Codec.mp4a
+            : Codec.opus,
+        itag: json['itag'],
+        duration: json["approxDurationMs"] ?? 0,
+        bitrate: json["bitrate"] ?? 0,
+        loudnessDb: (json['loudnessDb'])?.toDouble() ?? 0.0,
+        url: json['url'],
+        size: json["size"] ?? 0,
+      );
 }
 
 enum Codec { mp4a, opus }
