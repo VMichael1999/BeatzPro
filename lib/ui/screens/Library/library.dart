@@ -214,7 +214,7 @@ class PlaylistNAlbumLibraryWidget extends StatelessWidget {
                               itemBuilder: (context, index) => Center(
                                     child: PremiumGlass(
                                       padding: const EdgeInsets.all(10),
-                                      borderRadius: 24,
+                                      borderRadius: 10,
                                       child: ContentListItem(
                                         content: isAlbumContent
                                             ? libralbumCntrller

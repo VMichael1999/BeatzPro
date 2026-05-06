@@ -3,18 +3,18 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 class PremiumColors {
-  static const ink = Color(0xFF05060A);
-  static const graphite = Color(0xFF12141C);
-  static const panel = Color(0xCC191C26);
-  static const violet = Color(0xFF8B5CF6);
-  static const blue = Color(0xFF22D3EE);
-  static const red = Color(0xFFFF3D6E);
-  static const muted = Color(0xFF9AA3B2);
+  static const ink = Color(0xFF12071F);
+  static const graphite = Color(0xFF1C0E2B);
+  static const panel = Color(0xFF241333);
+  static const violet = Color(0xFF7A2CFF);
+  static const blue = Color(0xFF1C7CFF);
+  static const red = Color(0xFFFF007A);
+  static const muted = Color(0xFFB8A8CC);
 
   static const accentGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [violet, blue, red],
+    colors: [red, violet, blue],
   );
 }
 
@@ -28,10 +28,14 @@ class PremiumBackdrop extends StatelessWidget {
     return Container(
       decoration: const BoxDecoration(
         color: PremiumColors.ink,
-        gradient: RadialGradient(
-          center: Alignment(-0.75, -0.95),
-          radius: 1.2,
-          colors: [Color(0x553A1C78), PremiumColors.ink],
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            Color(0xFF4A2D63),
+            Color(0xFF1D0E2F),
+            Color(0xFF0B0614),
+          ],
         ),
       ),
       child: Stack(
@@ -39,12 +43,12 @@ class PremiumBackdrop extends StatelessWidget {
           Positioned(
             right: -80,
             top: 100,
-            child: _Glow(color: PremiumColors.blue.withOpacity(0.18)),
+            child: _Glow(color: PremiumColors.blue.withOpacity(0.16)),
           ),
           Positioned(
             left: -110,
             bottom: 80,
-            child: _Glow(color: PremiumColors.red.withOpacity(0.14)),
+            child: _Glow(color: PremiumColors.red.withOpacity(0.18)),
           ),
           child,
         ],
@@ -58,7 +62,7 @@ class PremiumGlass extends StatelessWidget {
     super.key,
     required this.child,
     this.padding = const EdgeInsets.all(16),
-    this.borderRadius = 28,
+    this.borderRadius = 10,
     this.margin,
   });
 
@@ -75,21 +79,21 @@ class PremiumGlass extends StatelessWidget {
         borderRadius: BorderRadius.circular(borderRadius),
         boxShadow: [
           BoxShadow(
-            color: PremiumColors.violet.withOpacity(0.15),
-            blurRadius: 28,
-            offset: const Offset(0, 16),
+            color: PremiumColors.red.withOpacity(0.18),
+            blurRadius: 18,
+            offset: const Offset(0, 10),
           ),
           const BoxShadow(
             color: Colors.black54,
-            blurRadius: 32,
-            offset: Offset(0, 18),
+            blurRadius: 18,
+            offset: Offset(0, 12),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(borderRadius),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
           child: Container(
             padding: padding,
             decoration: BoxDecoration(
@@ -100,6 +104,86 @@ class PremiumGlass extends StatelessWidget {
             child: child,
           ),
         ),
+      ),
+    );
+  }
+}
+
+class NeonDiscFrame extends StatelessWidget {
+  const NeonDiscFrame({
+    super.key,
+    required this.child,
+    required this.size,
+  });
+
+  final Widget child;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: size,
+      width: size,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: size,
+            width: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: const SweepGradient(
+                colors: [
+                  PremiumColors.red,
+                  PremiumColors.violet,
+                  PremiumColors.blue,
+                  PremiumColors.red,
+                ],
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: PremiumColors.red.withOpacity(0.35),
+                  blurRadius: 28,
+                ),
+                BoxShadow(
+                  color: PremiumColors.blue.withOpacity(0.22),
+                  blurRadius: 36,
+                ),
+              ],
+            ),
+          ),
+          Container(
+            height: size - 10,
+            width: size - 10,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: PremiumColors.ink,
+            ),
+          ),
+          SizedBox(
+            height: size - 46,
+            width: size - 46,
+            child: child,
+          ),
+          Positioned(
+            right: 5,
+            top: size * 0.35,
+            child: Container(
+              height: 11,
+              width: 11,
+              decoration: BoxDecoration(
+                color: PremiumColors.blue,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: PremiumColors.blue.withOpacity(0.85),
+                    blurRadius: 12,
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

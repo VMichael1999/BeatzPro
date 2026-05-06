@@ -76,14 +76,14 @@ class ContentListWidget extends StatelessWidget {
                     if (isAlbumContent) {
                       return PremiumGlass(
                         padding: const EdgeInsets.all(10),
-                        borderRadius: 24,
+                        borderRadius: 10,
                         child:
                             ContentListItem(content: content.albumList[index]),
                       );
                     }
                     return PremiumGlass(
                       padding: const EdgeInsets.all(10),
-                      borderRadius: 24,
+                      borderRadius: 10,
                       child:
                           ContentListItem(content: content.playlistList[index]),
                     );

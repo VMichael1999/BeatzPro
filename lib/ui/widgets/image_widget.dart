@@ -54,13 +54,17 @@ class ImageWidget extends StatelessWidget {
     final bool offlineAvailable =
         song != null && (song?.extras?["url"] ?? "").contains("file");
 
-    final radius = isPlayerArtImage ? 34.0 : 18.0;
+    final radius = isPlayerArtImage ? size / 2 : 8.0;
     return Container(
       height: size,
       width: size,
       decoration: BoxDecoration(
-        shape: artist != null ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: artist != null ? null : BorderRadius.circular(radius),
+        shape: (artist != null || isPlayerArtImage)
+            ? BoxShape.circle
+            : BoxShape.rectangle,
+        borderRadius: (artist != null || isPlayerArtImage)
+            ? null
+            : BorderRadius.circular(radius),
         boxShadow: [
           BoxShadow(
             color: PremiumColors.violet.withOpacity(0.22),
@@ -75,8 +79,9 @@ class ImageWidget extends StatelessWidget {
         ],
       ),
       child: ClipRRect(
-        borderRadius:
-            artist != null ? BorderRadius.zero : BorderRadius.circular(radius),
+        borderRadius: (artist != null || isPlayerArtImage)
+            ? BorderRadius.circular(size / 2)
+            : BorderRadius.circular(radius),
         child: offlineAvailable
             ? Image.file(
                 File(
@@ -97,10 +102,10 @@ class ImageWidget extends StatelessWidget {
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
                         gradient: PremiumColors.accentGradient,
-                        shape: artist != null
+                        shape: (artist != null || isPlayerArtImage)
                             ? BoxShape.circle
                             : BoxShape.rectangle,
-                        borderRadius: artist != null
+                        borderRadius: (artist != null || isPlayerArtImage)
                             ? null
                             : BorderRadius.circular(radius),
                       ),
@@ -114,10 +119,10 @@ class ImageWidget extends StatelessWidget {
                     direction: ShimmerDirection.ltr,
                     child: Container(
                       decoration: BoxDecoration(
-                        shape: artist != null
+                        shape: (artist != null || isPlayerArtImage)
                             ? BoxShape.circle
                             : BoxShape.rectangle,
-                        borderRadius: artist != null
+                        borderRadius: (artist != null || isPlayerArtImage)
                             ? null
                             : BorderRadius.circular(radius),
                         color: Colors.white54,

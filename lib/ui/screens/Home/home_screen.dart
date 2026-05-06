@@ -294,6 +294,7 @@ class _FeaturedNowPlayingCard extends StatelessWidget {
       return PremiumGlass(
         margin: const EdgeInsets.only(right: 20, bottom: 24),
         padding: const EdgeInsets.all(18),
+        borderRadius: 10,
         child: Row(
           children: [
             song != null
@@ -303,7 +304,7 @@ class _FeaturedNowPlayingCard extends StatelessWidget {
                     height: 104,
                     decoration: BoxDecoration(
                       gradient: PremiumColors.accentGradient,
-                      borderRadius: BorderRadius.circular(24),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.music_note,
                         color: Colors.white, size: 42),

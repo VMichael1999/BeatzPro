@@ -25,9 +25,7 @@ class StandardPlayer extends StatelessWidget {
     final size = MediaQuery.of(context).size;
     final PlayerController playerController = Get.find<PlayerController>();
 
-    double playerArtImageSize =
-        size.width - 60; //((size.height < 750) ? 90 : 60);
-    //playerArtImageSize = playerArtImageSize > 350 ? 350 : playerArtImageSize;
+    double playerArtImageSize = size.width - 96;
     final spaceAvailableForArtImage =
         size.height - (70 + Get.mediaQuery.padding.bottom + 330);
     playerArtImageSize = playerArtImageSize > spaceAvailableForArtImage
@@ -126,33 +124,29 @@ class StandardPlayer extends StatelessWidget {
                 Column(
                     children: [
                       /// Work as top padding depending on the lyrics visibility and screen size
-                      Obx(
-                        () => playerController.showLyricsflag.value
-                            ? SizedBox(
-                                height: size.height < 750 ? 60 : 90,
-                              )
-                            : SizedBox(
-                                height: size.height < 750 ? 110 : 140,
-                              ),
-                      ),
+                      SizedBox(height: size.height < 750 ? 70 : 96),
 
                       /// Contains the lyrics switch and album art with lyrics
                       Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           const LyricsSwitch(),
+                          const SizedBox(height: 10),
                           ConstrainedBox(
                               constraints: const BoxConstraints(maxWidth: 500),
-                              child: AlbumArtNLyrics(
-                                  playerArtImageSize: playerArtImageSize)),
+                              child: NeonDiscFrame(
+                                size: playerArtImageSize,
+                                child: AlbumArtNLyrics(
+                                    playerArtImageSize:
+                                        playerArtImageSize - 46),
+                              )),
                         ],
                       ),
 
                       /// Extra space container
-                      Expanded(child: Container()),
-
+                      const SizedBox(height: 22),
                       const AudioVisualizer(),
-                      const SizedBox(height: 20),
+                      const Spacer(),
 
                       /// Contains the player controls
                       Padding(

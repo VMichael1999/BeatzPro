@@ -17,7 +17,7 @@ class SearchItem extends StatelessWidget {
     return PremiumGlass(
       margin: const EdgeInsets.only(bottom: 10, right: 8),
       padding: EdgeInsets.zero,
-      borderRadius: 20,
+      borderRadius: 10,
       child: ListTile(
         contentPadding: const EdgeInsets.only(left: 14, right: 12),
         onTap: () {

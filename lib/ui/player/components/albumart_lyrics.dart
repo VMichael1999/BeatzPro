@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '/ui/player/components/lyrics_widget.dart';
 import '/ui/player/player_controller.dart';
 import '../../widgets/image_widget.dart';
+import '../../widgets/premium_surface.dart';
 import '../../widgets/sleep_timer_bottom_sheet.dart';
 import '../../widgets/songinfo_bottom_sheet.dart';
 
@@ -63,8 +64,8 @@ class AlbumArtNLyrics extends StatelessWidget {
                         height: playerArtImageSize,
                         width: playerArtImageSize,
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.8),
-                          borderRadius: BorderRadius.circular(5),
+                          color: PremiumColors.ink.withOpacity(0.82),
+                          shape: BoxShape.circle,
                         ),
                         child: Stack(
                           children: [
@@ -75,7 +76,7 @@ class AlbumArtNLyrics extends StatelessWidget {
                             IgnorePointer(
                               child: Container(
                                 decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(5),
+                                  shape: BoxShape.circle,
                                   gradient: LinearGradient(
                                     begin: Alignment.topCenter,
                                     end: Alignment.bottomCenter,

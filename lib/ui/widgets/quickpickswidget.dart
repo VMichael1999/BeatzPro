@@ -73,7 +73,7 @@ class QuickPicksWidget extends StatelessWidget {
                       child: PremiumGlass(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 10, vertical: 8),
-                        borderRadius: 20,
+                        borderRadius: 10,
                         child: ListTile(
                             contentPadding: EdgeInsets.zero,
                             leading: ImageWidget(
