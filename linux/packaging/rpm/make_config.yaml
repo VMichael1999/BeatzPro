@@ -1,0 +1,26 @@
+icon: assets/icons/icon.png
+summary: An application to stream Music
+group: Application/Multimedia
+vendor: Michael Anthony Valdiviezo Maza
+packager: Michael Anthony Valdiviezo Maza
+license: GPLv3
+url: https://github.com/VMichael1999/BeatzPro
+
+requires:
+  - mpv-libs
+  - libappindicator
+
+display_name: beatzpro
+
+keywords:
+  - Opensource
+  - Music
+  - Streaming
+  - Flutter
+
+generic_name: Music Application
+
+categories:
+  - Music
+
+startup_notify: true
