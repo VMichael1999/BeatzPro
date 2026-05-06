@@ -36,6 +36,15 @@ Future<List<String>?> getSongUrlFromExplode(String songId) async {
   return streamProvider.legacyUrlList;
 }
 
+Future<Map<String, dynamic>> getStreamInfo(String songId, dynamic token) async {
+  if (songId.substring(0, 4) == "MPED") {
+    songId = songId.substring(4);
+  }
+  BackgroundIsolateBinaryMessenger.ensureInitialized(token);
+  final streamProvider = await StreamProvider.fetch(songId);
+  return streamProvider.hmStreamingData;
+}
+
 Future<List<String>?> getSongUrlFromExplodeIsolate(
     String songId, RootIsolateToken token) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);

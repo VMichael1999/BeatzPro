@@ -104,6 +104,18 @@ class StreamProvider {
       highestQualityAudio?.url ?? audioFormats!.last.url,
     ];
   }
+
+  Map<String, dynamic> get hmStreamingData {
+    final lowQuality = lowQualityAudio;
+    final highQuality = highestQualityAudio;
+    final hasAudio = lowQuality != null && highQuality != null;
+    return {
+      "playable": playable && hasAudio,
+      "statusMSG": hasAudio ? statusMSG : "No audio stream available",
+      "lowQualityAudio": lowQuality?.toJson(),
+      "highQualityAudio": highQuality?.toJson(),
+    };
+  }
 }
 
 class Audio {

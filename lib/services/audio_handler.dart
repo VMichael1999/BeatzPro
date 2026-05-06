@@ -14,7 +14,9 @@ import '../ui/screens/Home/home_screen_controller.dart';
 import '/services/background_task.dart';
 import '/services/permission_service.dart';
 import '../utils/helper.dart';
+import '/models/hm_streaming_data.dart';
 import '/models/media_Item_builder.dart';
+import '/services/stream_service.dart';
 import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
 import '../ui/screens/Library/library_controller.dart';
@@ -141,9 +143,23 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
         printERROR('Error message: ${e.message}');
       } else {
         printERROR('An error occurred: $e');
-        final box = Hive.box("songsUrlCache");
-        if (box.containsKey(mediaItem.value!.id)) {
-          if (isExpired(url: box.get(mediaItem.value!.id)[1])) {
+        final box = Hive.box("SongsUrlCache");
+        final currentMediaItem = mediaItem.value;
+        if (currentMediaItem != null && box.containsKey(currentMediaItem.id)) {
+          final cachedInfo = box.get(currentMediaItem.id);
+          String? cachedUrl;
+          if (cachedInfo is Map) {
+            final highQualityAudio = cachedInfo['highQualityAudio'];
+            final lowQualityAudio = cachedInfo['lowQualityAudio'];
+            cachedUrl = highQualityAudio is Map
+                ? highQualityAudio['url']
+                : lowQualityAudio is Map
+                    ? lowQualityAudio['url']
+                    : null;
+          } else if (cachedInfo is List && cachedInfo.length > 1) {
+            cachedUrl = cachedInfo[1];
+          }
+          if (isExpired(url: cachedUrl)) {
             await _player.stop();
             await customAction("playByIndex", {'index': currentIndex});
             return;
@@ -367,14 +383,22 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       currentIndex = songIndex;
       final isNewUrlReq = extras['newUrl'] ?? false;
       final currentSong = queue.value[currentIndex];
-      final url =
+      final streamInfo =
           await checkNGetUrl(currentSong.id, generateNewUrl: isNewUrlReq);
       mediaItem.add(currentSong);
-      currentSongUrl = url;
-      if (url == null || songIndex != currentIndex) {
+      if (songIndex != currentIndex) {
+        return;
+      } else if (!streamInfo.playable) {
+        currentSongUrl = null;
+        isSongLoading = false;
+        printERROR(streamInfo.statusMSG);
+        playbackState.add(playbackState.value.copyWith(
+            processingState: AudioProcessingState.error,
+            errorCode: 404,
+            errorMessage: streamInfo.statusMSG));
         return;
       }
-      currentSong.extras!['url'] = url;
+      currentSongUrl = currentSong.extras!['url'] = streamInfo.audio!.url;
       playbackState.add(playbackState.value.copyWith(queueIndex: currentIndex));
       await _playList.add(_createAudioSource(currentSong));
       isSongLoading = false;
@@ -423,13 +447,18 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       currentIndex = 0;
       mediaItem.add(currMed);
       queue.add([currMed]);
-      final url = (await checkNGetUrl(currMed.id));
-      currentSongUrl = url;
-      if (url == null) {
+      final streamInfo = await checkNGetUrl(currMed.id);
+      if (!streamInfo.playable) {
+        currentSongUrl = null;
+        isSongLoading = false;
+        printERROR(streamInfo.statusMSG);
+        playbackState.add(playbackState.value.copyWith(
+            processingState: AudioProcessingState.error,
+            errorCode: 404,
+            errorMessage: streamInfo.statusMSG));
         return;
       }
-      currentSongUrl = url;
-      currMed.extras!['url'] = url;
+      currentSongUrl = currMed.extras!['url'] = streamInfo.audio!.url;
       await _playList.add(_createAudioSource(currMed));
       isSongLoading = false;
       await _player.play();
@@ -519,14 +548,19 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   Future<void> cacheNextSongUrl({int offset = 2}) async {
     if (queue.value.length > currentIndex + offset) {
       final songId = (queue.value[currentIndex + offset]).id;
-      if (isExpired(url: Hive.box("SongsUrlCache").get(songId)?.first) &&
+      final streamInfoJson = Hive.box("SongsUrlCache").get(songId);
+      final cachedLowQualityAudio =
+          streamInfoJson is Map ? streamInfoJson['lowQualityAudio'] : null;
+      final cachedLowQualityUrl =
+          cachedLowQualityAudio is Map ? cachedLowQualityAudio['url'] : null;
+      if (isExpired(url: cachedLowQualityUrl) &&
           !(Hive.box("SongDownloads").containsKey(songId)) &&
           !(Hive.box("SongsCache").containsKey(songId))) {
         final token = RootIsolateToken.instance;
-        Future.sync(() =>
-            Isolate.run(() => getSongUrlFromExplodeIsolate(songId, token!))
+        Future.sync(() => Isolate.run(() => getStreamInfo(songId, token!))
                 .then((value) async {
-              if (value != null) {
+              final streamInfo = HMStreamingData.fromJson(value);
+              if (streamInfo.playable) {
                 await Hive.box("SongsUrlCache").put(songId, value);
                 printWarning("Isolate: Next Song Url Cached song Id $songId");
               }
@@ -536,54 +570,91 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   }
 
 // Work around used [useNewInstanceOfExplode = false] to Fix Connection closed before full header was received issue
-  Future<String?> checkNGetUrl(String songId,
+  Future<HMStreamingData> checkNGetUrl(String songId,
       {bool generateNewUrl = false, bool offlineReplacementUrl = false}) async {
     printINFO("Requested id : $songId");
     final songDownloadsBox = Hive.box("SongDownloads");
     if (!offlineReplacementUrl &&
         (await Hive.openBox("SongsCache")).containsKey(songId)) {
       printINFO("Got Song from cachedbox ($songId)");
-      return "file://$_cacheDir/cachedSongs/$songId.mp3";
+      final streamInfo = Hive.box("SongsCache").get(songId)["streamInfo"];
+      Audio? cacheAudioPlaceholder;
+      if (streamInfo != null && streamInfo.isNotEmpty) {
+        streamInfo[1]['url'] = "file://$_cacheDir/cachedSongs/$songId.mp3";
+        cacheAudioPlaceholder = Audio.fromJson(streamInfo[1]);
+      } else {
+        cacheAudioPlaceholder = Audio(
+            audioCodec: Codec.mp4a,
+            bitrate: 0,
+            loudnessDb: 0,
+            duration: 0,
+            size: 0,
+            url: "file://$_cacheDir/cachedSongs/$songId.mp3",
+            itag: 0);
+      }
+      return HMStreamingData(
+          playable: true,
+          statusMSG: "OK",
+          lowQualityAudio: cacheAudioPlaceholder,
+          highQualityAudio: cacheAudioPlaceholder);
     } else if (!offlineReplacementUrl && songDownloadsBox.containsKey(songId)) {
-      final path = songDownloadsBox.get(songId)['url'];
+      final song = songDownloadsBox.get(songId);
+      final streamInfoJson = song["streamInfo"];
+      Audio? audio;
+      final path = song['url'];
+      if (streamInfoJson != null && streamInfoJson.isNotEmpty) {
+        audio = Audio.fromJson(streamInfoJson[1]);
+      } else {
+        audio = Audio(
+            itag: 140,
+            audioCodec: Codec.mp4a,
+            bitrate: 0,
+            duration: 0,
+            loudnessDb: 0,
+            url: path,
+            size: 0);
+      }
+      final streamInfo = HMStreamingData(
+          playable: true,
+          statusMSG: "OK",
+          highQualityAudio: audio,
+          lowQualityAudio: audio);
 
       if (path.contains(
           "${Get.find<SettingsScreenController>().supportDirPath}/Music")) {
-        return path;
+        return streamInfo;
       }
       //check file access and if file exist in storage
       final status = await PermissionService.getExtStoragePermission();
       if (status && await File(path).exists()) {
-        return path;
+        return streamInfo;
       }
       //in case file doesnot found in storage, song will be played online
       return checkNGetUrl(songId, offlineReplacementUrl: true);
     } else {
       //check if song stream url is cached and allocate url accordingly
       final songsUrlCacheBox = Hive.box("SongsUrlCache");
-      final qualityIndex = Hive.box('AppPrefs').get('streamingQuality');
-      dynamic url;
+      final qualityIndex = Hive.box('AppPrefs').get('streamingQuality') ?? 1;
+      HMStreamingData? streamInfo;
       if (songsUrlCacheBox.containsKey(songId) && !generateNewUrl) {
-        if (isExpired(url: songsUrlCacheBox.get(songId)[qualityIndex])) {
-          final token = RootIsolateToken.instance;
-          url = await Isolate.run(
-              () => getSongUrlFromExplodeIsolate(songId, token!));
-          if (url != null) songsUrlCacheBox.put(songId, url);
-        } else {
-          url = songsUrlCacheBox.get(songId);
-          printINFO("Got URLLLLLL cachedbox ($songId)");
-        }
-      } else {
-        final token = RootIsolateToken.instance;
-        url = await Isolate.run(() => getSongUrlFromExplodeIsolate(
-            songId, token!)); //(await musicServices.getSongStreamUrl(songId));
-        if (url != null) {
-          songsUrlCacheBox.put(songId, url);
-          printERROR("Url cached in Box for songId $songId");
+        final streamInfoJson = songsUrlCacheBox.get(songId);
+        if (streamInfoJson.runtimeType.toString().contains("Map") &&
+            !isExpired(url: (streamInfoJson['lowQualityAudio']['url']))) {
+          printINFO("Got cached Url ($songId)");
+          streamInfo = HMStreamingData.fromJson(streamInfoJson);
         }
       }
 
-      return url != null ? url[qualityIndex] : null;
+      if (streamInfo == null) {
+        final token = RootIsolateToken.instance;
+        final streamInfoJson =
+            await Isolate.run(() => getStreamInfo(songId, token));
+        streamInfo = HMStreamingData.fromJson(streamInfoJson);
+        if (streamInfo.playable) songsUrlCacheBox.put(songId, streamInfoJson);
+      }
+
+      streamInfo.setQualityIndex(qualityIndex as int);
+      return streamInfo;
     }
   }
 }
