@@ -1,6 +1,7 @@
 import 'dart:core';
 import 'package:flutter/services.dart';
-import 'package:beatzpro/services/stream_service.dart';
+
+import '/services/stream_service.dart';
 
 //Not in use for now
 // Future<List<String>?> getSongUrlFromPiped(String songId,
@@ -27,11 +28,16 @@ import 'package:beatzpro/services/stream_service.dart';
 //   }
 // }
 
-Future<Map<String, dynamic>> getStreamInfo(String songId, dynamic token) async {
+Future<List<String>?> getSongUrlFromExplode(String songId) async {
   if (songId.substring(0, 4) == "MPED") {
     songId = songId.substring(4);
   }
+  final streamProvider = await StreamProvider.fetch(songId);
+  return streamProvider.legacyUrlList;
+}
+
+Future<List<String>?> getSongUrlFromExplodeIsolate(
+    String songId, RootIsolateToken token) async {
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  final playerResponse = (await StreamProvider.fetch(songId));
-  return playerResponse.hmStreamingData;
+  return getSongUrlFromExplode(songId);
 }

@@ -9,6 +9,24 @@ rootProject.buildDir = '../build'
 subprojects {
     project.buildDir = "${rootProject.buildDir}/${project.name}"
 }
+subprojects { project ->
+    project.tasks.withType(JavaCompile).configureEach {
+        options.compilerArgs << "-Xlint:-options"
+    }
+
+    project.plugins.withId("com.android.library") {
+        def androidExt = project.extensions.findByName("android")
+        if (androidExt != null && androidExt.namespace == null) {
+            def manifestFile = project.file("src/main/AndroidManifest.xml")
+            if (manifestFile.exists()) {
+                def manifestPackage = new XmlSlurper(false, false).parse(manifestFile).@package.text()
+                if (manifestPackage) {
+                    androidExt.namespace = manifestPackage
+                }
+            }
+        }
+    }
+}
 subprojects {
     project.evaluationDependsOn(':app')
 }

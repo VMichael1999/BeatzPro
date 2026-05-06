@@ -9,7 +9,7 @@ class SideNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isMobileOrTabScreen = size.width < 480;
+    final isMobileOrTabScreen = size.width<480;
     final homeScreenController = Get.find<HomeScreenController>();
     return Align(
       alignment: Alignment.topCenter,
@@ -46,36 +46,34 @@ class SideNavBar extends StatelessWidget {
                       //railDestination("Settings")
                       const NavigationRailDestination(
                         padding: EdgeInsets.only(top: 10, bottom: 10),
-                        icon: Icon(Icons.settings),
+                        icon: Icon(Icons.settings_rounded),
                         label: SizedBox.shrink(),
-                        selectedIcon: Icon(Icons.settings),
+                        selectedIcon: Icon(Icons.settings_rounded),
                       )
                     ],
                   ),
                 ),
               ))
           : Padding(
-              padding: const EdgeInsets.only(bottom: 100.0),
-              child: SideBarAnimated(
+            padding: const EdgeInsets.only(bottom:100.0),
+            child: SideBarAnimated(
                 onTap: homeScreenController.onSideBarTabSelected,
                 sideBarColor: Theme.of(context).primaryColor.withAlpha(250),
                 animatedContainerColor: Theme.of(context).colorScheme.secondary,
-                hoverColor:
-                    Theme.of(context).colorScheme.secondary.withAlpha(180),
+                hoverColor: Theme.of(context).colorScheme.secondary.withAlpha(180),
                 splashColor: Theme.of(context).colorScheme.secondary,
-                highlightColor:
-                    Theme.of(context).colorScheme.secondary.withAlpha(180),
+                highlightColor: Theme.of(context).colorScheme.secondary.withAlpha(180),
                 widthSwitch: 800,
                 mainLogoImage: 'assets/icons/icon.png',
                 sidebarItems: [
                   SideBarItem(
-                    iconSelected: Icons.home,
+                    iconSelected: Icons.home_rounded,
                     iconUnselected: Icons.home_outlined,
                     text: 'home'.tr,
                   ),
                   SideBarItem(
-                    iconSelected: Icons.audiotrack,
-                    iconUnselected: Icons.audiotrack,
+                    iconSelected: Icons.audiotrack_rounded,
+                    iconUnselected: Icons.audiotrack_rounded,
                     text: 'songs'.tr,
                   ),
                   SideBarItem(
@@ -99,7 +97,7 @@ class SideNavBar extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
+          ),
     );
   }
 

@@ -24,8 +24,6 @@ class ArtistScreenController extends GetxController
   final isAddedToLibrary = false.obs;
   final songScrollController = ScrollController();
   final videoScrollController = ScrollController();
-  final albumScrollController = ScrollController();
-  final singlesScrollController = ScrollController();
   SortWidgetController? sortWidgetController;
   final additionalOperationMode = OperationMode.none.obs;
   bool continuationInProgress = false;
@@ -38,8 +36,7 @@ class ArtistScreenController extends GetxController
   void onInit() {
     final args = Get.arguments;
     _init(args[0], args[1]);
-    if (GetPlatform.isDesktop ||
-        Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
+    if (GetPlatform.isDesktop || Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
       tabController = TabController(vsync: this, length: 5);
       tabController?.animation?.addListener(() {
         int indexChange = tabController!.offset.round();
@@ -74,8 +71,6 @@ class ArtistScreenController extends GetxController
 
   Future<void> _fetchArtistContent(String id) async {
     artistData.value = await musicServices.getArtist(id);
-    artistData["Singles"] = artistData["Singles & EPs"];
-    artistData["Songs"] = artistData["Top songs"];
     isArtistContentFetced.value = true;
     //inspect(artistData.value);
     final data = artistData;
@@ -109,7 +104,7 @@ class ArtistScreenController extends GetxController
     final tabName = ["About", "Songs", "Videos", "Albums", "Singles"][val];
 
     //cancel additional operations in case of tab change
-    if (sortWidgetController != null) {
+    if(sortWidgetController!=null){
       sortWidgetController?.setActiveMode(OperationMode.none);
       cancelAdditionalOperation();
     }
@@ -134,28 +129,23 @@ class ArtistScreenController extends GetxController
     }
 
     // observered - continuation available only for song & vid
-    if (val != 0) {
-    final scrollController = val == 1
-        ? songScrollController
-        : val == 2
-            ? videoScrollController
-            : val == 3
-                ? albumScrollController
-                : singlesScrollController;
+    if (val == 1 || val == 2) {
+      final scrollController =
+          val == 1 ? songScrollController : videoScrollController;
 
-    scrollController.addListener(() {
-      double maxScroll = scrollController.position.maxScrollExtent;
-      double currentScroll = scrollController.position.pixels;
-      if (currentScroll >= maxScroll / 2 &&
-          sepataredContent[tabName]['additionalParams'] !=
-              '&ctoken=null&continuation=null') {
-        if (!continuationInProgress) {
-          continuationInProgress = true;
-          getContinuationContents(artistData[tabName], tabName);
+      scrollController.addListener(() {
+        double maxScroll = scrollController.position.maxScrollExtent;
+        double currentScroll = scrollController.position.pixels;
+        if (currentScroll >= maxScroll / 2 &&
+            sepataredContent[tabName]['additionalParams'] !=
+                '&ctoken=null&continuation=null') {
+          if (!continuationInProgress) {
+            continuationInProgress = true;
+            getContinuationContents(artistData[tabName], tabName);
+          }
         }
-      }
-    });
-   }
+      });
+    }
     isSeparatedArtistContentFetced.value = true;
   }
 
@@ -170,13 +160,15 @@ class ArtistScreenController extends GetxController
     continuationInProgress = false;
   }
 
-  void onSort(SortType sortType, bool isAscending, String title) {
+  void onSort(SortType sortType,
+      bool isAscending, String title) {
     if (sepataredContent[title] == null) {
       return;
     }
     if (title == "Songs" || title == "Videos") {
       final songlist = sepataredContent[title]['results'].toList();
-      sortSongsNVideos(songlist, sortType, isAscending);
+      sortSongsNVideos(
+          songlist, sortType, isAscending);
       sepataredContent[title]['results'] = songlist;
     } else if (title == "Albums" || title == "Singles") {
       final albumList = sepataredContent[title]['results'].toList();
@@ -215,15 +207,8 @@ class ArtistScreenController extends GetxController
   void startAdditionalOperation(
       SortWidgetController sortWidgetController_, OperationMode mode) {
     sortWidgetController = sortWidgetController_;
-    final tabName = [
-      "About",
-      "Songs",
-      "Videos",
-      "Albums",
-      "Singles"
-    ][navigationRailCurrentIndex.value];
-    additionalOperationTempList.value =
-        sepataredContent[tabName]['results'].toList();
+    final tabName = ["About", "Songs", "Videos", "Albums", "Singles"][navigationRailCurrentIndex.value];
+    additionalOperationTempList.value = sepataredContent[tabName]['results'].toList();
     if (mode == OperationMode.addToPlaylist || mode == OperationMode.delete) {
       for (int i = 0; i < additionalOperationTempList.length; i++) {
         additionalOperationTempMap[i] = false;
@@ -281,8 +266,6 @@ class ArtistScreenController extends GetxController
     tempListContainer.clear();
     songScrollController.dispose();
     videoScrollController.dispose();
-    albumScrollController.dispose();
-    singlesScrollController.dispose();
     tabController?.dispose();
     Get.find<HomeScreenController>().whenHomeScreenOnTop();
     super.onClose();

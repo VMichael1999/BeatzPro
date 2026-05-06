@@ -17,7 +17,6 @@ import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import '../Home/home_screen_controller.dart';
 import '/ui/utils/theme_controller.dart';
-import 'package:wakelock_plus/wakelock_plus.dart';
 
 class SettingsScreenController extends GetxController {
   late String _supportDir;
@@ -25,13 +24,9 @@ class SettingsScreenController extends GetxController {
   final setBox = Hive.box("AppPrefs");
   final themeModetype = ThemeType.dynamic.obs;
   final skipSilenceEnabled = false.obs;
-  final loudnessNormalizationEnabled = false.obs;
   final noOfHomeScreenContent = 3.obs;
   final streamingQuality = AudioQuality.High.obs;
-  final playerUi = 0.obs;
-  final slidableActionEnabled = true.obs;
   final isIgnoringBatteryOptimizations = false.obs;
-  final autoOpenPlayer = false.obs;
   final discoverContentType = "QP".obs;
   final isNewVersionAvailable = false.obs;
   final isLinkedWithPiped = false.obs;
@@ -40,14 +35,13 @@ class SettingsScreenController extends GetxController {
   final downloadLocationPath = "".obs;
   final exportLocationPath = "".obs;
   final downloadingFormat = "".obs;
-  final autoDownloadFavoriteSongEnabled = false.obs;
+  final hideDloc = true.obs;
   final isTransitionAnimationDisabled = false.obs;
   final isBottomNavBarEnabled = false.obs;
   final backgroundPlayEnabled = true.obs;
-  final keepScreenAwake = false.obs;
   final restorePlaybackSession = false.obs;
   final cacheHomeScreenData = true.obs;
-  final currentVersion = "V1.12.2";
+  final currentVersion = "V1.0.3";
 
   @override
   void onInit() {
@@ -77,47 +71,26 @@ class SettingsScreenController extends GetxController {
   }
 
   Future<void> _setInitValue() async {
-    final isDesktop = GetPlatform.isDesktop;
-    final appLang = setBox.get('currentAppLanguageCode') ?? "en";
-    currentAppLanguageCode.value = appLang == "zh_Hant"
-        ? "zh-TW"
-        : appLang == "zh_Hans"
-            ? "zh-CN"
-            : appLang;
-    isBottomNavBarEnabled.value =
-        isDesktop ? false : (setBox.get("isBottomNavBarEnabled") ?? false);
+    currentAppLanguageCode.value = setBox.get('currentAppLanguageCode') ?? "en";
+    isBottomNavBarEnabled.value = setBox.get("isBottomNavBarEnabled") ?? false;
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;
-    cacheSongs.value = setBox.get('cacheSongs') ?? false;
-    themeModetype.value = ThemeType.values[setBox.get('themeModeType') ?? 0];
-    skipSilenceEnabled.value =
-        isDesktop ? false : setBox.get("skipSilenceEnabled");
-    loudnessNormalizationEnabled.value = isDesktop
-        ? false
-        : (setBox.get("loudnessNormalizationEnabled") ?? false);
-    autoOpenPlayer.value = (setBox.get("autoOpenPlayer") ?? true);
+    cacheSongs.value = setBox.get('cacheSongs');
+    themeModetype.value = ThemeType.values[setBox.get('themeModeType')];
+    skipSilenceEnabled.value = setBox.get("skipSilenceEnabled");
     restorePlaybackSession.value =
         setBox.get("restrorePlaybackSession") ?? false;
     cacheHomeScreenData.value = setBox.get("cacheHomeScreenData") ?? true;
     streamingQuality.value =
         AudioQuality.values[setBox.get('streamingQuality')];
-    playerUi.value = isDesktop ? 0 : (setBox.get('playerUi') ?? 0);
     backgroundPlayEnabled.value = setBox.get("backgroundPlayEnabled") ?? true;
-    keepScreenAwake.value =
-        setBox.get("keepScreenAwake") ?? GetPlatform.isDesktop ? true : false;
-    final downloadPath =
-        setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
     downloadLocationPath.value =
-        (isDesktop && downloadPath.contains("emulated"))
-            ? await _createInAppSongDownDir()
-            : downloadPath;
-
+        setBox.get('downloadLocationPath') ?? await _createInAppSongDownDir();
     exportLocationPath.value =
         setBox.get("exportLocationPath") ?? "/storage/emulated/0/Music";
-    downloadingFormat.value = setBox.get('downloadingFormat') ?? "m4a";
+    downloadingFormat.value = setBox.get('downloadingFormat') ?? "opus";
     discoverContentType.value = setBox.get('discoverContentType') ?? "QP";
-    slidableActionEnabled.value = setBox.get('slidableActionEnabled') ?? true;
     if (setBox.containsKey("piped")) {
       isLinkedWithPiped.value = setBox.get("piped")['isLoggedIn'];
     }
@@ -127,14 +100,10 @@ class SettingsScreenController extends GetxController {
       isIgnoringBatteryOptimizations.value =
           (await Permission.ignoreBatteryOptimizations.isGranted);
     }
-    autoDownloadFavoriteSongEnabled.value =
-        setBox.get("autoDownloadFavoriteSongEnabled") ?? false;
   }
 
   void setAppLanguage(String? val) {
     Get.updateLocale(Locale(val!));
-    Get.find<MusicServices>().hlCode = val;
-    Get.find<HomeScreenController>().loadContentFromNetwork(silent: true);
     currentAppLanguageCode.value = val;
     setBox.put('currentAppLanguageCode', val);
   }
@@ -147,16 +116,6 @@ class SettingsScreenController extends GetxController {
   void setStreamingQuality(dynamic val) {
     setBox.put("streamingQuality", AudioQuality.values.indexOf(val));
     streamingQuality.value = val;
-  }
-
-  void setPlayerUi(dynamic val) {
-    final playerCon = Get.find<PlayerController>();
-    setBox.put("playerUi", val);
-    if (val == 1 && playerCon.gesturePlayerStateAnimationController == null) {
-      playerCon.initGesturePlayerStateAnimationController();
-    }
-
-    playerUi.value = val;
   }
 
   void enableBottomNavBar(bool val) {
@@ -174,11 +133,6 @@ class SettingsScreenController extends GetxController {
           val ? 75.0 : 75.0 + Get.mediaQuery.viewPadding.bottom;
     }
     setBox.put("isBottomNavBarEnabled", val);
-  }
-
-  void toggleSlidableAction(bool val) {
-    setBox.put("slidableActionEnabled", val);
-    slidableActionEnabled.value = val;
   }
 
   void changeDownloadingFormat(String? val) {
@@ -214,6 +168,10 @@ class SettingsScreenController extends GetxController {
 
     setBox.put("downloadLocationPath", pickedFolderPath);
     downloadLocationPath.value = pickedFolderPath;
+  }
+
+  void showDownLoc() {
+    hideDloc.value = false;
   }
 
   void disableTransitionAnimation(bool val) {
@@ -262,12 +220,6 @@ class SettingsScreenController extends GetxController {
     skipSilenceEnabled.value = val;
   }
 
-  void toggleLoudnessNormalization(bool val) {
-    Get.find<PlayerController>().toggleLoudnessNormalization(val);
-    setBox.put("loudnessNormalizationEnabled", val);
-    loudnessNormalizationEnabled.value = val;
-  }
-
   void toggleRestorePlaybackSession(bool val) {
     setBox.put("restrorePlaybackSession", val);
     restorePlaybackSession.value = val;
@@ -287,44 +239,15 @@ class SettingsScreenController extends GetxController {
     }
   }
 
-  void toggleAutoDownloadFavoriteSong(bool val) {
-    setBox.put("autoDownloadFavoriteSongEnabled", val);
-    autoDownloadFavoriteSongEnabled.value = val;
-  }
-
   void toggleBackgroundPlay(bool val) {
     setBox.put('backgroundPlayEnabled', val);
     backgroundPlayEnabled.value = val;
-  }
-
-  void toggleKeepScreenAwake(bool val) {
-    setBox.put('keepScreenAwake', val);
-    keepScreenAwake.value = val;
-    try {
-        if (val) {
-          // enable wakelock immediately if music is playing
-          if (Get.find<PlayerController>().buttonState.value ==
-              PlayButtonState.playing) {
-            WakelockPlus.enable();
-          }
-        } else {
-          WakelockPlus.disable();
-        }
-     
-    } catch (e) {
-      // ignore if player/controller not available
-    }
   }
 
   Future<void> enableIgnoringBatteryOptimizations() async {
     await Permission.ignoreBatteryOptimizations.request();
     isIgnoringBatteryOptimizations.value =
         await Permission.ignoreBatteryOptimizations.isGranted;
-  }
-
-  void toggleAutoOpenPlayer(bool val) {
-    setBox.put('autoOpenPlayer', val);
-    autoOpenPlayer.value = val;
   }
 
   Future<void> unlinkPiped() async {
@@ -338,10 +261,6 @@ class SettingsScreenController extends GetxController {
     box.close();
   }
 
-  Future<void> resetAppSettingsToDefault() async {
-    await setBox.clear();
-  }
-
   void toggleStopPlyabackOnSwipeAway(bool val) {
     setBox.put('stopPlyabackOnSwipeAway', val);
     stopPlyabackOnSwipeAway.value = val;
@@ -349,13 +268,5 @@ class SettingsScreenController extends GetxController {
 
   Future<void> closeAllDatabases() async {
     await Hive.close();
-  }
-
-  Future<String> get dbDir async {
-    if (GetPlatform.isDesktop) {
-      return "$supportDirPath/db";
-    } else {
-      return (await getApplicationDocumentsDirectory()).path;
-    }
   }
 }

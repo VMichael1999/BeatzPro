@@ -1,15 +1,15 @@
 [Setup]
 AppId=B9F6E402-0CAE-4045-BDE6-14BD6C39C4EA
-AppVersion=1.12.2+27
-AppName=beatzpro
-AppPublisher=Michael Anthony Valdiviezo Maza
-AppPublisherURL=https://github.com/VMichael1999/BeatzPro
-AppSupportURL=https://github.com/VMichael1999/BeatzPro
-AppUpdatesURL=https://github.com/VMichael1999/BeatzPro
+AppVersion=1.9.2+15
+AppName=BeatzPro
+AppPublisher=anandnet
+AppPublisherURL=https://github.com/anandnet/Harmony-Music
+AppSupportURL=https://github.com/anandnet/Harmony-Music
+AppUpdatesURL=https://github.com/anandnet/Harmony-Music
 DefaultDirName={autopf}\beatzpro
 DisableProgramGroupPage=yes
 OutputDir=.
-OutputBaseFilename=beatzpro-1.12.2
+OutputBaseFilename=harmonymusicv1.9.2
 Compression=lzma
 SolidCompression=yes
 SetupIconFile=..\..\windows\runner\resources\app_icon.ico
@@ -31,8 +31,8 @@ Source: "..\..\build\windows\x64\runner\Release\*"; DestDir: "{app}"; Flags: ign
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
 [Icons]
-Name: "{autoprograms}\beatzpro"; Filename: "{app}\beatzpro.exe"
-Name: "{autodesktop}\beatzpro"; Filename: "{app}\beatzpro.exe"; Tasks: desktopicon
+Name: "{autoprograms}\BeatzPro"; Filename: "{app}\beatzpro.exe"
+Name: "{autodesktop}\BeatzPro"; Filename: "{app}\beatzpro.exe"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\beatzpro.exe"; Description: "{cm:LaunchProgram,{#StringChange('beatzpro', '&', '&&')}}"; Flags: nowait postinstall skipifsilent
+Filename: "{app}\beatzpro.exe"; Description: "{cm:LaunchProgram,{#StringChange('BeatzPro', '&', '&&')}}"; Flags: nowait postinstall skipifsilent

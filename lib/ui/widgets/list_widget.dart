@@ -2,24 +2,20 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '/models/album.dart';
-import '../../models/artist.dart';
-import '../../models/playling_from.dart';
+import '/ui/widgets/marqwee_widget.dart';
 import '../../models/playlist.dart';
 import '../navigator.dart';
 import '../player/player_controller.dart';
 import 'image_widget.dart';
-import 'song_list_tile.dart';
 import 'songinfo_bottom_sheet.dart';
+import 'package:mini_music_visualizer/mini_music_visualizer.dart';
 
-class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
+class ListWidget extends StatelessWidget {
   const ListWidget(this.items, this.title, this.isCompleteList,
       {super.key,
-      this.isPlaylistOrAlbum = false,
+      this.isPlaylist = false,
       this.isArtistSongs = false,
       this.playlist,
-      this.album,
-      this.artist,
       this.scrollController});
   final List<dynamic> items;
   final String title;
@@ -28,10 +24,8 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
 
   /// Valid for songlist
   final bool isArtistSongs;
-  final bool isPlaylistOrAlbum;
+  final bool isPlaylist;
   final Playlist? playlist;
-  final Album? album;
-  final Artist? artist;
 
   @override
   Widget build(BuildContext context) {
@@ -48,10 +42,8 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
       return isCompleteList
           ? Expanded(
               child: listViewSongVid(items,
-                  isPlaylistOrAlbum: isPlaylistOrAlbum,
+                  isPlaylist: isPlaylist,
                   playlist: playlist,
-                  album: album,
-                  artist: artist,
                   sc: scrollController,
                   isArtistSongs: isArtistSongs))
           : SizedBox(
@@ -74,10 +66,8 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
   }
 
   Widget listViewSongVid(List<dynamic> items,
-      {bool isPlaylistOrAlbum = false,
+      {bool isPlaylist = false,
       Playlist? playlist,
-      Album? album,
-      Artist? artist,
       bool isArtistSongs = false,
       ScrollController? sc}) {
     final playerController = Get.find<PlayerController>();
@@ -93,27 +83,113 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
       physics: isCompleteList
           ? const BouncingScrollPhysics()
           : const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => SongListTile(
-        song: items[index] as MediaItem,
+      itemBuilder: (context, index) => ListTile(
         onTap: () {
-          isArtistSongs
-              // if song is from artist then play from artist
+          (isPlaylist || isArtistSongs)
               ? playerController.playPlayListSong(
-                  List<MediaItem>.from(items), index,
-                  playfrom: PlaylingFrom(
-                      type: PlaylingFromType.ARTIST,
-                      name: artist?.name ?? "........."))
-              :
-              // if playlist is not null then play from playlist else play from album
-              playlist != null && album == null
-                  ? playerController.playPlayListSong(
-                      List<MediaItem>.from(items), index,
-                      playfrom: PlaylingFrom(
-                        type: PlaylingFromType.PLAYLIST,
-                        name: playlist.title,
-                      ))
-                  : playerController.pushSongToQueue(items[index] as MediaItem);
+                  List<MediaItem>.from(items), index)
+              : playerController.pushSongToQueue(items[index] as MediaItem);
         },
+        onLongPress: () async {
+          showModalBottomSheet(
+            constraints: const BoxConstraints(maxWidth: 500),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
+            ),
+            isScrollControlled: true,
+            context: playerController.homeScaffoldkey.currentState!.context,
+            //constraints: BoxConstraints(maxHeight:Get.height),
+            barrierColor: Colors.transparent.withAlpha(100),
+            builder: (context) => SongInfoBottomSheet(
+              items[index] as MediaItem,
+              playlist: playlist,
+            ),
+          ).whenComplete(() => Get.delete<SongInfoController>());
+        },
+        contentPadding: const EdgeInsets.only(top: 0, left: 5, right: 30),
+        leading: ImageWidget(
+          size: 55,
+          song: items[index],
+        ),
+        title: MarqueeWidget(
+          child: Text(
+            items[index].title.length > 50
+                ? items[index].title.substring(0, 50)
+                : items[index].title,
+            maxLines: 1,
+            style: Theme.of(context).textTheme.titleMedium,
+          ),
+        ),
+        subtitle: Text(
+          "${items[index].artist}",
+          maxLines: 1,
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
+        trailing: SizedBox(
+          width: Get.size.width > 800 ? 80 : 40,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              // Column(
+              //   mainAxisAlignment: MainAxisAlignment.center,
+              //   children: [
+              //     if (isPlaylist)
+              //       Obx(() => playerController.currentSong.value?.id ==
+              //               items[index].id
+              //           ? const Icon(
+              //               Icons.equalizer_rounded,
+              //             )
+              //           : const SizedBox.shrink()),
+              //     Text(
+              //       items[index].extras!['length'] ?? "",
+              //       style: Theme.of(context).textTheme.titleSmall,
+              //     ),
+              //   ],
+              // ),
+              Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isPlaylist)
+                    Obx(() => playerController.currentSong.value?.id ==
+                            items[index].id
+                        ? const MiniMusicVisualizer(
+                            color: Colors.red,
+                            radius: 20.0, // Radius of the visualizer circle
+                            animate: true, // Whether to animate the visualizer
+                          )
+                        : const SizedBox.shrink()),
+                  Text(
+                    items[index].extras!['length'] ?? "",
+                    style: Theme.of(context).textTheme.titleSmall,
+                  ),
+                ],
+              ),
+
+              if (GetPlatform.isDesktop)
+                IconButton(
+                    splashRadius: 20,
+                    onPressed: () {
+                      showModalBottomSheet(
+                        constraints: const BoxConstraints(maxWidth: 500),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius:
+                              BorderRadius.vertical(top: Radius.circular(10.0)),
+                        ),
+                        isScrollControlled: true,
+                        context: playerController
+                            .homeScaffoldkey.currentState!.context,
+                        //constraints: BoxConstraints(maxHeight:Get.height),
+                        barrierColor: Colors.transparent.withAlpha(100),
+                        builder: (context) => SongInfoBottomSheet(
+                          items[index] as MediaItem,
+                          playlist: playlist,
+                        ),
+                      ).whenComplete(() => Get.delete<SongInfoController>());
+                    },
+                    icon: const Icon(Icons.more_vert))
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -150,12 +226,9 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
           physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
             String artistName = "";
-            try {
-              for (dynamic items in (albums[index].artists).sublist(1)) {
-                artistName = "${artistName + items['name']},";
-              }
-            // ignore: empty_catches
-            } catch (e) {}
+            for (dynamic items in (albums[index].artists).sublist(1)) {
+              artistName = "${artistName + items['name']},";
+            }
             artistName = artistName.length > 16
                 ? artistName.substring(0, 16)
                 : artistName;
@@ -163,9 +236,8 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
                 album: albums[index],
                 title: albums[index].title,
                 subtitle: artistName,
-                subtitle2: albums[index].artists.isEmpty
-                    ? "${albums[index].year}"
-                    : "${(albums[index].artists[0]['name'])} • ${albums[index].year}");
+                subtitle2:
+                    "${(albums[index].artists[0]['name'])} • ${albums[index].year}");
           }),
     );
   }
@@ -216,12 +288,12 @@ class ListWidget extends StatelessWidget with RemoveSongFromPlaylistMixin {
     return InkWell(
       onTap: () {
         if (album != null) {
-          Get.toNamed(ScreenNavigationSetup.albumScreen,
-              id: ScreenNavigationSetup.id, arguments: (album, album.browseId));
+          Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
+              id: ScreenNavigationSetup.id, arguments: [true, album, false]);
         } else {
-          Get.toNamed(ScreenNavigationSetup.playlistScreen,
+          Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
               id: ScreenNavigationSetup.id,
-              arguments: [playlist, playlist.playlistId]);
+              arguments: [false, playlist, false]);
         }
       },
       child: SizedBox(

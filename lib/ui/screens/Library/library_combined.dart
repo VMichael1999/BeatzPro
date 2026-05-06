@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 
 import '/ui/screens/Settings/settings_screen_controller.dart';
 import '/ui/widgets/piped_sync_widget.dart';
-import '/ui/widgets/premium_surface.dart';
 import '../../widgets/create_playlist_dialog.dart';
 import 'library.dart';
 
@@ -16,10 +15,9 @@ class CombinedLibrary extends StatelessWidget {
     final settingscrnController = Get.find<SettingsScreenController>();
 
     return Scaffold(
-      backgroundColor: PremiumColors.ink,
       appBar: AppBar(
         toolbarHeight: 85,
-        backgroundColor: Colors.transparent,
+        backgroundColor: Theme.of(context).canvasColor,
         elevation: 0,
         actions: [
           Obx(() => (settingscrnController.isLinkedWithPiped.isTrue)
@@ -33,7 +31,6 @@ class CombinedLibrary extends StatelessWidget {
               width: 50,
               child: FittedBox(
                 child: FloatingActionButton.extended(
-                    backgroundColor: PremiumColors.violet,
                     elevation: 0,
                     onPressed: () {
                       showDialog(
@@ -70,19 +67,17 @@ class CombinedLibrary extends StatelessWidget {
               Text('library'.tr, style: Theme.of(context).textTheme.titleLarge),
         ),
       ),
-      body: PremiumBackdrop(
-        child: TabBarView(
-          controller: tabCon.tabController,
-          children: const [
-            SongsLibraryWidget(
-              isBottomNavActive: true,
-            ),
-            PlaylistNAlbumLibraryWidget(
-                isAlbumContent: false, isBottomNavActive: true),
-            PlaylistNAlbumLibraryWidget(isBottomNavActive: true),
-            LibraryArtistWidget(isBottomNavActive: true),
-          ],
-        ),
+      body: TabBarView(
+        controller: tabCon.tabController,
+        children: const [
+          SongsLibraryWidget(
+            isBottomNavActive: true,
+          ),
+          PlaylistNAlbumLibraryWidget(
+              isAlbumContent: false, isBottomNavActive: true),
+          PlaylistNAlbumLibraryWidget(isBottomNavActive: true),
+          LibraryArtistWidget(isBottomNavActive: true),
+        ],
       ),
     );
   }

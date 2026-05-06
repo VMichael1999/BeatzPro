@@ -3,18 +3,17 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
+import 'package:beatzpro/ui/screens/Home/home_screen_controller.dart';
+import 'package:beatzpro/ui/screens/Settings/settings_screen_controller.dart';
 
-import '/ui/screens/Home/home_screen_controller.dart';
-import '/ui/screens/Settings/settings_screen_controller.dart';
 import '../utils/helper.dart';
 import '../ui/navigator.dart';
 import '../ui/player/player.dart';
-import 'player/components/mini_player.dart';
+import 'player/mini_player.dart';
 import 'player/player_controller.dart';
 import 'widgets/bottom_nav_bar.dart';
 import 'widgets/scroll_to_hide.dart';
 import 'widgets/sliding_up_panel.dart';
-import 'widgets/snackbar.dart';
 import 'widgets/up_next_queue.dart';
 
 class Home extends StatelessWidget {
@@ -39,32 +38,26 @@ class Home extends StatelessWidget {
       }
     }
     return PopScope(
-      canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
-        if (playerController.playerPanelController.isPanelOpen) {
-          playerController.playerPanelController.close();
-        } else {
-          if (Get.nestedKey(ScreenNavigationSetup.id)!.currentState!.canPop()) {
-            Get.nestedKey(ScreenNavigationSetup.id)!.currentState!.pop();
+        canPop: false,
+        onPopInvoked: (didPop) async {
+          if (didPop) return;
+          if (playerController.playerPanelController.isPanelOpen) {
+            playerController.playerPanelController.close();
           } else {
-            if (homeScreenController.tabIndex.value != 0) {
-              settingsScreenController.isBottomNavBarEnabled.isTrue
-                  ? homeScreenController.onBottonBarTabSelected(0)
-                  : homeScreenController.onSideBarTabSelected(0);
-            } else if (playerController.buttonState.value ==
-                PlayButtonState.playing) {
-              SystemNavigator.pop();
+            if (Get.nestedKey(ScreenNavigationSetup.id)!
+                .currentState!
+                .canPop()) {
+              Get.nestedKey(ScreenNavigationSetup.id)!.currentState!.pop();
             } else {
-              await Get.find<AudioHandler>().customAction("saveSession");
-              exit(0);
+              if (playerController.buttonState.value ==
+                  PlayButtonState.playing) {
+                SystemNavigator.pop();
+              } else {
+                await Get.find<AudioHandler>().customAction("saveSession");
+                exit(0);
+              }
             }
           }
-        }
-      },
-      child: CallbackShortcuts(
-        bindings: {
-          LogicalKeySet(LogicalKeyboardKey.space): playerController.playPause
         },
         child: Obx(
           () => Scaffold(
@@ -76,7 +69,7 @@ class Home extends StatelessWidget {
                       child: const BottomNavBar())
                   : null,
               key: playerController.homeScaffoldkey,
-              endDrawer: GetPlatform.isDesktop || isWideScreen
+              endDrawer: GetPlatform.isDesktop
                   ? Container(
                       constraints: const BoxConstraints(maxWidth: 600),
                       decoration: BoxDecoration(
@@ -116,60 +109,11 @@ class Home extends StatelessWidget {
                                             .textTheme
                                             .titleLarge,
                                       ),
-                                      Row(
-                                        children: [
-                                          InkWell(
-                                            onTap: () {
-                                              playerController
-                                                  .toggleQueueLoopMode();
-                                            },
-                                            child: Obx(
-                                              () => Container(
-                                                height: 30,
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                        horizontal: 20),
-                                                decoration: BoxDecoration(
-                                                  color: playerController
-                                                          .isQueueLoopModeEnabled
-                                                          .isFalse
-                                                      ? Colors.white24
-                                                      : Colors.white
-                                                          .withOpacity(0.8),
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                                child: Center(
-                                                    child:
-                                                        Text("queueLoop".tr)),
-                                              ),
-                                            ),
-                                          ),
-                                          IconButton(
-                                              onPressed: () {
-                                                if (playerController
-                                                    .isShuffleModeEnabled
-                                                    .isTrue) {
-                                                  ScaffoldMessenger.of(context)
-                                                      .showSnackBar(snackbar(
-                                                          context,
-                                                          "queueShufflingDeniedMsg"
-                                                              .tr,
-                                                          size: SanckBarSize
-                                                              .BIG));
-                                                  return;
-                                                }
-                                                playerController.shuffleQueue();
-                                              },
-                                              icon: const Icon(Icons.shuffle)),
-                                          IconButton(
-                                              onPressed: () {
-                                                playerController.clearQueue();
-                                              },
-                                              icon: const Icon(
-                                                  Icons.playlist_remove)),
-                                        ],
-                                      )
+                                      IconButton(
+                                          onPressed: () {
+                                            playerController.shuffleQueue();
+                                          },
+                                          icon: const Icon(Icons.shuffle))
                                     ],
                                   ),
                                 )),
@@ -192,9 +136,6 @@ class Home extends StatelessWidget {
                     minHeight: playerController.playerPanelMinHeight.value,
                     maxHeight: size.height,
                     isDraggable: !isWideScreen,
-                    onSwipeUp: () {
-                      playerController.queuePanelController.open();
-                    },
                     panel: const Player(),
                     body: const ScreenNavigation(),
                     header: !isWideScreen
@@ -204,8 +145,6 @@ class Home extends StatelessWidget {
                           )
                         : const MiniPlayer(),
                   ))),
-        ),
-      ),
-    );
+        ));
   }
 }

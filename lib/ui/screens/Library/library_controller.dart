@@ -2,13 +2,9 @@ import 'dart:io';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:beatzpro/ui/widgets/snackbar.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:file_picker/file_picker.dart';
-import 'dart:convert';
 
-import '../../../utils/house_keeping.dart';
 import '../../widgets/add_to_playlist.dart';
 import '/ui/widgets/sort_widget.dart';
 import '../Settings/settings_screen_controller.dart';
@@ -73,14 +69,12 @@ class LibrarySongsController extends GetxController {
         .whereType<MediaItem>()
         .toList());
     isSongFetched.value = true;
-
-    //Remove deleted songs and expired songUrl from database
-    startHouseKeeping();
   }
 
   void onSort(SortType sortType, bool isAscending) {
     final songlist = librarySongsList.toList();
-    sortSongsNVideos(songlist, sortType, isAscending);
+    sortSongsNVideos(
+        songlist, sortType, isAscending);
     librarySongsList.value = songlist;
   }
 
@@ -101,7 +95,6 @@ class LibrarySongsController extends GetxController {
     tempListContainer.clear();
   }
 
-  /// remove song from library list and from storage only, not from database
   Future<void> removeSong(MediaItem item, bool isDownloaded,
       {String? url}) async {
     if (tempListContainer.isNotEmpty) {
@@ -177,10 +170,10 @@ class LibrarySongsController extends GetxController {
     final downloadsBox = await Hive.openBox("SongDownloads");
     final cacheBox = await Hive.openBox("SongsCache");
     for (MediaItem element in songs) {
-      if (downloadsBox.containsKey(element.id)) {
+      if(downloadsBox.containsKey(element.id)){
         await downloadsBox.delete(element.id);
         removeSong(element, true);
-      } else {
+      }else{
         await cacheBox.delete(element.id);
         removeSong(element, false);
       }
@@ -212,26 +205,26 @@ class LibraryPlaylistsController extends GetxController
   late AnimationController controller;
 
   final playlistCreationMode = "local".obs;
-  static final initPlst = [
+  final initPlst = [
     Playlist(
         title: "recentlyPlayed".tr,
         playlistId: "LIBRP",
-        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        thumbnailUrl: "",
         isCloudPlaylist: false),
     Playlist(
         title: "favorites".tr,
         playlistId: "LIBFAV",
-        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        thumbnailUrl: "",
         isCloudPlaylist: false),
     Playlist(
         title: "cachedOrOffline".tr,
         playlistId: "SongsCache",
-        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        thumbnailUrl: "",
         isCloudPlaylist: false),
     Playlist(
         title: "downloads".tr,
         playlistId: "SongDownloads",
-        thumbnailUrl: Playlist.thumbPlaceholderUrl,
+        thumbnailUrl: "",
         isCloudPlaylist: false)
   ];
   late RxList<Playlist> libraryPlaylists = RxList(initPlst);
@@ -239,10 +232,6 @@ class LibraryPlaylistsController extends GetxController
   final creationInProgress = false.obs;
   final textInputController = TextEditingController();
   List<Playlist> tempListContainer = [];
-
-  // Add these RxBool to track import progress
-  final isImporting = false.obs;
-  final importProgress = 0.0.obs;
 
   @override
   void onInit() {
@@ -269,12 +258,6 @@ class LibraryPlaylistsController extends GetxController
 
     isContentFetched.value = true;
     await box.close();
-  }
-
-  void updatePlaylistIntoDb(Playlist playlist) async {
-    final box = await Hive.openBox("LibraryPlaylists");
-    box.put(playlist.playlistId, playlist.toJson());
-    refreshLib();
   }
 
   void removePipedPlaylists() {
@@ -335,7 +318,7 @@ class LibraryPlaylistsController extends GetxController
 
   Future<bool> renamePlaylist(Playlist playlist) async {
     String title = textInputController.text;
-    if (title.trim().isNotEmpty) {
+    if (title != "") {
       if (playlist.isPipedPlaylist) {
         final res = await Get.find<PipedServices>()
             .renamePlaylist(playlist.playlistId, title);
@@ -360,7 +343,8 @@ class LibraryPlaylistsController extends GetxController
   Future<bool> createNewPlaylist(
       {bool createPlaylistNaddSong = false, List<MediaItem>? songItems}) async {
     String title = textInputController.text;
-    if (title.trim().isNotEmpty) {
+    if (title != "") {
+      title = "${title[0].toUpperCase()}${title.substring(1).toLowerCase()}";
       dynamic newplst;
 
       if (playlistCreationMode.value == "piped") {
@@ -370,9 +354,8 @@ class LibraryPlaylistsController extends GetxController
           newplst = Playlist(
               title: title,
               playlistId: "${res.response['playlistId']}",
-              thumbnailUrl: songItems != null
-                  ? songItems[0].artUri.toString()
-                  : Playlist.thumbPlaceholderUrl,
+              thumbnailUrl:
+                  songItems != null ? songItems[0].artUri.toString() : "",
               description: "Piped Playlist",
               isCloudPlaylist: true,
               isPipedPlaylist: true);
@@ -384,9 +367,7 @@ class LibraryPlaylistsController extends GetxController
         newplst = Playlist(
             title: title,
             playlistId: "LIB${DateTime.now().millisecondsSinceEpoch}",
-            thumbnailUrl: songItems != null
-                ? songItems[0].artUri.toString()
-                : Playlist.thumbPlaceholderUrl,
+            thumbnailUrl: "",
             description: "Library Playlist",
             isCloudPlaylist: false);
         final box = await Hive.openBox("LibraryPlaylists");
@@ -457,176 +438,6 @@ class LibraryPlaylistsController extends GetxController
     textInputController.dispose();
     controller.dispose();
     super.dispose();
-  }
-
-  Future<void> importPlaylistFromJson(BuildContext context) async {
-    try {
-      isImporting.value = true;
-      importProgress.value = 0.1;
-
-      // Show progress dialog
-      if (context.mounted) {
-        _showImportProgressDialog(context);
-      }
-
-      // Use file_picker to select JSON file
-      final result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['json'],
-        dialogTitle: 'importPlaylist'.tr,
-      );
-
-      if (result == null || result.files.isEmpty) {
-        // User cancelled the picker
-        if (Get.isDialogOpen ?? false) {
-          Get.back();
-        }
-        isImporting.value = false;
-        importProgress.value = 0.0;
-        return;
-      }
-
-      importProgress.value = 0.2;
-
-      final file = File(result.files.single.path!);
-      if (!await file.exists()) {
-        throw FileSystemException("fileNotFound".tr);
-      }
-
-      final jsonString = await file.readAsString();
-      importProgress.value = 0.3;
-
-      final jsonData = jsonDecode(jsonString);
-      importProgress.value = 0.4;
-
-      // Validate JSON structure
-      if (!jsonData.containsKey('playlistInfo') ||
-          !jsonData.containsKey('songs')) {
-        throw FormatException("invalidPlaylistFile".tr);
-      }
-
-      // Create new playlist ID
-      final playlistInfo = jsonData['playlistInfo'];
-      final newPlaylistId = "LIB${DateTime.now().millisecondsSinceEpoch}";
-      importProgress.value = 0.5;
-
-      // Create playlist object
-      final newPlaylist = Playlist(
-        title: "${playlistInfo['title']} (${"imported".tr})",
-        playlistId: newPlaylistId,
-        thumbnailUrl: playlistInfo['thumbnailUrl'] ??
-            (playlistInfo['thumbnails'] != null &&
-                    playlistInfo['thumbnails'].isNotEmpty
-                ? playlistInfo['thumbnails'][0]['url']
-                : Playlist.thumbPlaceholderUrl),
-        description: playlistInfo['description'] ?? "importedPlaylist".tr,
-        isCloudPlaylist: false,
-      );
-      importProgress.value = 0.6;
-
-      // Save playlist to database
-      final box = await Hive.openBox("LibraryPlaylists");
-      box.put(newPlaylistId, newPlaylist.toJson());
-      importProgress.value = 0.7;
-
-      // Save songs to playlist
-      final songsBox = await Hive.openBox(newPlaylistId);
-      final songsList = jsonData['songs'] as List;
-
-      // Update progress as songs are added
-      final totalSongs = songsList.length;
-      for (int i = 0; i < totalSongs; i++) {
-        await songsBox.put(i, songsList[i]);
-        // Update progress from 70% to 95% based on song import progress
-        importProgress.value = 0.7 + (0.25 * (i + 1) / totalSongs);
-      }
-
-      await songsBox.close();
-      await box.close();
-      importProgress.value = 1.0;
-
-      // Close progress dialog if it's still open
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-
-      // Refresh library to show the new playlist
-      refreshLib();
-
-      // Show success message
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          snackbar(
-            context,
-            "${"playlistImportedMsg".tr}: ${newPlaylist.title}",
-            size: SanckBarSize.MEDIUM,
-          ),
-        );
-      }
-    } catch (e) {
-      // Close progress dialog if it's still open
-      if (Get.isDialogOpen ?? false) {
-        Get.back();
-      }
-
-      printERROR("Error importing playlist: $e");
-
-      String errorMsg = "importError".tr;
-      if (e is FileSystemException) {
-        errorMsg = "importErrorFileAccess".tr;
-      } else if (e is FormatException) {
-        errorMsg = "importErrorFormat".tr;
-      } else if (e.toString().contains("invalidPlaylistFile")) {
-        errorMsg = "invalidPlaylistFile".tr;
-      } else if (e is HiveError) {
-        errorMsg = "importErrorDatabase".tr;
-      }
-
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            snackbar(context, errorMsg, size: SanckBarSize.MEDIUM));
-      }
-    } finally {
-      isImporting.value = false;
-      importProgress.value = 0.0;
-    }
-  }
-
-  // Helper method to show import progress dialog
-  void _showImportProgressDialog(BuildContext context) {
-    Get.dialog(
-      AlertDialog(
-        backgroundColor: Theme.of(context).cardColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-        title: Text(
-          "importingPlaylist".tr,
-          style: Theme.of(context).textTheme.titleLarge,
-        ),
-        content: Obx(() => Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                LinearProgressIndicator(
-                  value: Get.isRegistered<LibraryPlaylistsController>()
-                      ? importProgress.value
-                      : 0,
-                  backgroundColor:
-                      Theme.of(context).colorScheme.surfaceContainerHighest,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    Theme.of(context).colorScheme.secondary,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  "${(Get.isRegistered<LibraryPlaylistsController>() ? importProgress.value * 100 : 0).toInt()}%",
-                  style: Theme.of(context).textTheme.bodyMedium,
-                ),
-              ],
-            )),
-      ),
-      barrierDismissible: false,
-    );
   }
 }
 

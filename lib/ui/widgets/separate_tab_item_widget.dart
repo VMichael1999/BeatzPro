@@ -68,16 +68,13 @@ class SeparateTabItemWidget extends StatelessWidget {
           isCompleteList
               ? Obx(() => SortWidget(
                     tag: "${title}_$artistControllerTag",
-                    screenController: artistController,
                     isAdditionalOperationRequired: artistController != null &&
                         (title == "Songs" || title == "Videos"),
                     isSearchFeatureRequired: artistController != null,
                     titleLeftPadding: 9,
                     itemCountTitle:
                         "${isResultWidget ? (searchResController?.separatedResultContent[title] ?? []).length : (artistController?.sepataredContent[title] != null ? artistController?.sepataredContent[title]['results'] : []).length} ${"items".tr}",
-                    requiredSortTypes: buildSortTypeSet(
-                        title == 'Albums' || title == "Singles",
-                        title == "Songs" || title == "Videos"),
+                    requiredSortTypes: buildSortTypeSet(title == 'Albums' || title == "Singles", title == "Songs" || title == "Videos"),
                     onSort: (type, ascending) {
                       isResultWidget
                           ? searchResController!.onSort(type, ascending, title)
@@ -119,13 +116,12 @@ class SeparateTabItemWidget extends StatelessWidget {
                                   title,
                                   isCompleteList,
                                   isArtistSongs: true,
-                                  artist: artistController.artist_,
                                   scrollController: scrollController,
                                 )
                               : ModificationList(
                                   mode: artistController
                                       .additionalOperationMode.value,
-                                  screenController: artistController,
+                                  artistScreenController: artistController,
                                 )))
                       : const Expanded(
                           child: Center(child: LoadingIndicator())))

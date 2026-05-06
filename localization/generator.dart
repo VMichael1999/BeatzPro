@@ -11,13 +11,8 @@ Future<void> generate() async {
       return;
     }
     String fileContent = (entity as File).readAsStringSync();
-    String langCode = entity.uri.pathSegments.last.split(".")[0];
-    if (langCode == "zh_Hant") {
-      langCode = "zh-TW";
-    } else if (langCode == "zh_Hans") {
-      langCode = "zh-CN";
-    }
-    allLangData = """$allLangData"$langCode" : $fileContent,""";
+    allLangData =
+        """$allLangData"${entity.uri.pathSegments.last.split(".")[0]}" : $fileContent,""";
   });
 
   String content = """

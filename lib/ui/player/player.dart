@@ -1,210 +1,660 @@
+import 'dart:io';
 import 'dart:ui';
-
+import 'package:flutter_lyric/lyrics_reader.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-
-import '/ui/player/components/gesture_player.dart';
-import '/ui/player/components/standard_player.dart';
-import '/ui/screens/Settings/settings_screen_controller.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:newton_particles/newton_particles.dart';
+import 'package:toggle_switch/toggle_switch.dart';
+import 'package:simple_ripple_animation/simple_ripple_animation.dart';
+import '../widgets/buttonplay_animation.dart';
+import '../widgets/custom_lyricui.dart';
+import '../widgets/custom_progress.dart';
+import '../widgets/loader.dart';
 import '../../utils/helper.dart';
-import '../widgets/snackbar.dart';
 import '../widgets/up_next_queue.dart';
 import '/ui/player/player_controller.dart';
+import '../screens/Settings/settings_screen_controller.dart';
+import '/ui/utils/theme_controller.dart';
+import '/ui/widgets/marqwee_widget.dart';
+import '/ui/widgets/songinfo_bottom_sheet.dart';
+import '../widgets/image_widget.dart';
 import '../widgets/sliding_up_panel.dart';
 
-/// Player screen
-/// Contains the player ui
-///
-/// Player ui can be standard player or gesture player
-class Player extends StatelessWidget {
+class Player extends StatefulWidget {
   const Player({super.key});
+
+  @override
+  _PlayerState createState() => _PlayerState();
+}
+
+class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
+  AnimationController? _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(seconds: 20), // Customize the duration as needed
+      vsync: this,
+    )..repeat(); // This will repeat the animation infinitely
+  }
+
+  @override
+  void dispose() {
+    _controller?.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     printINFO("player");
     final size = MediaQuery.of(context).size;
     final PlayerController playerController = Get.find<PlayerController>();
-    final settingsScreenController = Get.find<SettingsScreenController>();
+    final ThemeController themeController = Get.find<ThemeController>();
+    double playerArtImageSize = size.width - ((size.height < 750) ? 90 : 60);
+    playerArtImageSize = playerArtImageSize > 350 ? 350 : playerArtImageSize;
+    final List<Color> colors = [
+      Colors.black,
+      Theme.of(context).primaryColor.withLightness(0.4),
+      Theme.of(context).primaryColor.withLightness(0.6),
+      Theme.of(context).primaryColor.withLightness(0.7),
+    ];
+
+    final List<int> duration = [900, 700, 600, 800, 500];
+
     return Scaffold(
-      /// SlidingUpPanel is used to create a panel that can slide up and down
-      /// It is used to show the current queue panel in mobile
-      body: Obx(
-        () => SlidingUpPanel(
-          boxShadow: const [],
-          minHeight: settingsScreenController.playerUi.value == 0
-              ? 65 + Get.mediaQuery.padding.bottom
-              : 0,
-          maxHeight: size.height,
-          isDraggable: !GetPlatform.isDesktop,
-          controller: GetPlatform.isDesktop
-              ? null
-              : playerController.queuePanelController,
-
-          /// this is the header of the collapsed panel
-          /// contains the button ^ to open the queue panel
-          collapsed: InkWell(
-            onTap: () {
-              /// queue open in end drawer in desktop
-              if (GetPlatform.isDesktop) {
-                playerController.homeScaffoldkey.currentState!.openEndDrawer();
-              } else {
-                playerController.queuePanelController.open();
-              }
-            },
-            child: Container(
-                color: Theme.of(context).primaryColor,
-                child: Column(
-                  children: [
-                    SizedBox(
-                      height: 65,
-                      child: Center(
-                          child: Icon(
-                        color: Theme.of(context).textTheme.titleMedium!.color,
-                        Icons.keyboard_arrow_up,
-                        size: 40,
-                      )),
-                    ),
-                  ],
-                )),
-          ),
-
-          /// Panel for queue
-          panelBuilder: (ScrollController sc, onReorderStart, onReorderEnd) {
-            playerController.scrollController = sc;
-            return Stack(
+      body: SlidingUpPanel(
+        minHeight: 65 + Get.mediaQuery.padding.bottom,
+        maxHeight: size.height,
+        isDraggable: !GetPlatform.isDesktop,
+        collapsed: InkWell(
+          onTap: () {
+            if (GetPlatform.isDesktop) {
+              playerController.homeScaffoldkey.currentState!.openEndDrawer();
+            }
+          },
+          child: Container(
+            color: Theme.of(context).bottomSheetTheme.modalBarrierColor,
+            child: Column(
               children: [
-                /// Stack first child
-                /// UpNextQueue widget contains list of songs in queue
-                UpNextQueue(
-                  onReorderEnd: onReorderEnd,
-                  onReorderStart: onReorderStart,
-                ),
-
-                /// Stack second child
-                /// This contains the bottom bar with queue loop, shuffle, clear queue buttons
-                /// and number of songs in queue
-                /// BackdropFilter is used to blur the background
-                Align(
-                  alignment: Alignment.bottomCenter,
-                  child: ClipRRect(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                      child: Container(
-                        padding: const EdgeInsets.only(
-                            top: 15, bottom: 10, left: 10, right: 10),
-                        decoration: BoxDecoration(
-                            boxShadow: const [
-                              BoxShadow(blurRadius: 5, color: Colors.black54)
-                            ],
-                            color: Theme.of(context)
-                                .primaryColor
-                                .withOpacity(0.5)),
-                        height: 60 + Get.mediaQuery.padding.bottom,
-                        child: Align(
-                          alignment: Alignment.topCenter,
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              /// number of songs in queue
-                              Obx(
-                                () => Text(
-                                  "${playerController.currentQueue.length} ${"songs".tr}",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleSmall!
-                                      .copyWith(
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium!
-                                              .color),
-                                ),
-                              ),
-
-                              /// queue loop button
-                              InkWell(
-                                onTap: () {
-                                  playerController.toggleQueueLoopMode();
-                                },
-                                child: Obx(
-                                  () => Container(
-                                    height: 30,
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 15),
-                                    decoration: BoxDecoration(
-                                      color: playerController
-                                              .isQueueLoopModeEnabled.isFalse
-                                          ? Colors.white24
-                                          : Colors.white.withOpacity(0.8),
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Center(child: Text("queueLoop".tr)),
-                                  ),
-                                ),
-                              ),
-
-                              /// queue shuffle button
-                              InkWell(
-                                onTap: () {
-                                  if (playerController
-                                      .isShuffleModeEnabled.isTrue) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                        snackbar(context,
-                                            "queueShufflingDeniedMsg".tr,
-                                            size: SanckBarSize.BIG));
-                                    return;
-                                  }
-                                  playerController.shuffleQueue();
-                                },
-                                child: Container(
-                                  height: 30,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Center(
-                                      child: Icon(Icons.shuffle,
-                                          color: Colors.black)),
-                                ),
-                              ),
-
-                              /// clear queue button
-                              InkWell(
-                                onTap: () {
-                                  playerController.clearQueue();
-                                },
-                                child: Container(
-                                  height: 30,
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.8),
-                                    borderRadius: BorderRadius.circular(20),
-                                  ),
-                                  child: const Center(
-                                      child: Icon(Icons.playlist_remove,
-                                          color: Colors.black)),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                SizedBox(
+                  height: 65,
+                  child: Center(
+                    child: Icon(
+                      color: Theme.of(context).textTheme.titleMedium!.color,
+                      Icons.keyboard_arrow_up_rounded,
+                      size: 40,
                     ),
                   ),
                 ),
               ],
-            );
-          },
+            ),
+          ),
+        ),
+        panelBuilder: (ScrollController sc, onReorderStart, onReorderEnd) {
+          playerController.scrollController = sc;
+          return Stack(
+            children: [
+              UpNextQueue(
+                onReorderEnd: onReorderEnd,
+                onReorderStart: onReorderStart,
+              ),
+              Positioned(
+                bottom: 60,
+                right: 15,
+                child: SizedBox(
+                  height: 60,
+                  width: 60,
+                  child: FittedBox(
+                    child: FloatingActionButton(
+                      heroTag: null,
+                      focusElevation: 0,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(14)),
+                      ),
+                      elevation: 0,
+                      onPressed: playerController.shuffleQueue,
+                      child: const Icon(Icons.shuffle),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
+        body: Stack(
+          children: [
+            Obx(
+              () => SizedBox.expand(
+                child: playerController.currentSong.value != null
+                    ? CachedNetworkImage(
+                        errorWidget: (context, url, error) {
+                          final imgFile = File(
+                              "${Get.find<SettingsScreenController>().supportDirPath}/thumbnails/${playerController.currentSong.value!.id}.png");
+                          if (imgFile.existsSync()) {
+                            themeController.setTheme(FileImage(imgFile));
+                            return Image.file(imgFile, cacheHeight: 200);
+                          }
+                          return const SizedBox.shrink();
+                        },
+                        memCacheHeight: 200,
+                        imageBuilder: (context, imageProvider) {
+                          Get.find<SettingsScreenController>()
+                                      .themeModetype
+                                      .value ==
+                                  ThemeType.dynamic
+                              ? themeController.setTheme(imageProvider)
+                              : null;
+                          return Image(
+                            image: imageProvider,
+                            fit: BoxFit.fitHeight,
+                          );
+                        },
+                        imageUrl: playerController.currentSong.value!.artUri
+                            .toString(),
+                        cacheKey:
+                            "${playerController.currentSong.value!.id}_song",
+                      )
+                    : Container(),
+              ),
+            ),
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+              child: Container(
+                color: Theme.of(context).primaryColor.withOpacity(0.90),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(left: 25, right: 25),
+              child: Column(
+                children: [
+                  Obx(
+                    () => playerController.showLyricsflag.value
+                        ? SizedBox(
+                            height: size.height < 750 ? 30 : 70,
+                          )
+                        : SizedBox(
+                            height: size.height < 750 ? 80 : 120,
+                          ),
+                  ),
+                  Obx(
+                    () => playerController.showLyricsflag.value
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 10.0),
+                            child: ToggleSwitch(
+                              minWidth: 90.0,
+                              cornerRadius: 20.0,
+                              activeBgColors: [
+                                [
+                                  Theme.of(context)
+                                      .primaryColor
+                                      .withLightness(0.4)
+                                ],
+                                [
+                                  Theme.of(context)
+                                      .primaryColor
+                                      .withLightness(0.4)
+                                ],
+                              ],
+                              activeFgColor: Colors.white,
+                              inactiveBgColor:
+                                  Theme.of(context).colorScheme.secondary,
+                              inactiveFgColor: Colors.white,
+                              initialLabelIndex:
+                                  playerController.lyricsMode.value,
+                              totalSwitches: 2,
+                              labels: ['synced'.tr, 'plain'.tr],
+                              radiusStyle: true,
+                              onToggle: playerController.changeLyricsMode,
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                  Obx(
+                    () => playerController.currentSong.value != null
+                        ? Stack(
+                            children: [
+                              AnimatedSwitcher(
+                                duration: const Duration(milliseconds: 500),
+                                transitionBuilder: (Widget child,
+                                    Animation<double> animation) {
+                                  return ScaleTransition(
+                                    scale: animation,
+                                    child: child,
+                                  );
+                                },
+                                child: Stack(
+                                  key: ValueKey(
+                                      playerController.currentSong.value),
+                                  children: [
+                                    Obx(() => Opacity(
+                                          opacity: playerController
+                                                  .showLyricsflag.isTrue
+                                              ? 0.0
+                                              : 1.0,
+                                          child: RippleAnimation(
+                                            color: Theme.of(context)
+                                                .primaryColor
+                                                .withLightness(0.4),
+                                            minRadius:
+                                                playerArtImageSize / 2 + 10,
+                                            repeat: true,
+                                            ripplesCount: 6,
+                                            child: AnimatedBuilder(
+                                              animation: _controller!,
+                                              builder: (context, child) {
+                                                return Transform.rotate(
+                                                  angle: _controller!.value *
+                                                      2 *
+                                                      3.1416,
+                                                  child: child,
+                                                );
+                                              },
+                                              child: InkWell(
+                                                key: ValueKey(playerController
+                                                    .currentSong.value),
+                                                onLongPress: () {
+                                                  showModalBottomSheet(
+                                                    constraints:
+                                                        const BoxConstraints(
+                                                            maxWidth: 500),
+                                                    shape:
+                                                        const RoundedRectangleBorder(
+                                                      borderRadius:
+                                                          BorderRadius.vertical(
+                                                        top: Radius.circular(
+                                                            10.0),
+                                                      ),
+                                                    ),
+                                                    isScrollControlled: true,
+                                                    context: playerController
+                                                        .homeScaffoldkey
+                                                        .currentState!
+                                                        .context,
+                                                    barrierColor: Colors
+                                                        .transparent
+                                                        .withAlpha(100),
+                                                    builder: (context) =>
+                                                        SongInfoBottomSheet(
+                                                      playerController
+                                                          .currentSong.value!,
+                                                      calledFromPlayer: true,
+                                                    ),
+                                                  ).whenComplete(() =>
+                                                      Get.delete<
+                                                          SongInfoController>());
+                                                },
+                                                onTap: () {
+                                                  playerController.showLyrics();
+                                                },
+                                                child: Container(
+                                                  height: playerArtImageSize,
+                                                  width: playerArtImageSize,
+                                                  clipBehavior: Clip.antiAlias,
+                                                  decoration:
+                                                      const BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                  ),
+                                                  child: ImageWidget(
+                                                    size: playerArtImageSize,
+                                                    song: playerController
+                                                        .currentSong.value!,
+                                                    isPlayerArtImage: true,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ),
+                                        )),
+                                    Obx(
+                                      () =>
+                                          playerController.showLyricsflag.isTrue
+                                              ? Stack(
+                                                  children: [
+                                                    Positioned.fill(
+                                                      child: Newton(
+                                                        activeEffects: [
+                                                          RainEffect(
+                                                            particleConfiguration:
+                                                                ParticleConfiguration(
+                                                              shape:
+                                                                  CircleShape(),
+                                                              size: const Size(
+                                                                  5, 5),
+                                                              color:
+                                                                  const SingleParticleColor(
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                            ),
+                                                            effectConfiguration:
+                                                                const EffectConfiguration(),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                    InkWell(
+                                                      onTap: () {
+                                                        playerController
+                                                            .showLyrics();
+                                                      },
+                                                      child: Container(
+                                                        height:
+                                                            playerArtImageSize *
+                                                                1.2,
+                                                        width:
+                                                            playerArtImageSize *
+                                                                1.2,
+                                                        decoration:
+                                                            BoxDecoration(
+                                                          color: Colors.black
+                                                              .withOpacity(0.5),
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(15),
+                                                        ),
+                                                        child: Stack(
+                                                          children: [
+                                                            Obx(
+                                                              () => playerController
+                                                                      .isLyricsLoading
+                                                                      .isTrue
+                                                                  ? const Center(
+                                                                      child:
+                                                                          LoadingIndicator())
+                                                                  : playerController
+                                                                              .lyricsMode
+                                                                              .toInt() ==
+                                                                          1
+                                                                      ? Center(
+                                                                          child:
+                                                                              SingleChildScrollView(
+                                                                            physics:
+                                                                                const BouncingScrollPhysics(),
+                                                                            padding:
+                                                                                EdgeInsets.symmetric(
+                                                                              horizontal: 0,
+                                                                              vertical: playerArtImageSize / 3.5,
+                                                                            ),
+                                                                            child:
+                                                                                Obx(
+                                                                              () => Text(
+                                                                                playerController.lyrics["plainLyrics"] == "NA" ? "lyricsNotAvailable".tr : playerController.lyrics["plainLyrics"],
+                                                                                textAlign: TextAlign.center,
+                                                                                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                                                                      fontSize: 20,
+                                                                                      color: Theme.of(context).primaryColor.withLightness(0.4),
+                                                                                    ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        )
+                                                                      : IgnorePointer(
+                                                                          child:
+                                                                              LyricsReader(
+                                                                            padding:
+                                                                                const EdgeInsets.only(left: 5, right: 5),
+                                                                            lyricUi:
+                                                                                CustomLyricUI(
+                                                                              primaryColor: Theme.of(context).primaryColor.withLightness(0.2),
+                                                                              highlightColor: Theme.of(context).primaryColor.withLightness(0.4),
+                                                                              fontSize: 25,
+                                                                              highlightFontSize: 28,
+                                                                            ),
+                                                                            position:
+                                                                                playerController.progressBarStatus.value.current.inMilliseconds,
+                                                                            model:
+                                                                                LyricsModelBuilder.create().bindLyricToMain(playerController.lyrics['synced'].toString()).getModel(),
+                                                                            emptyBuilder: () =>
+                                                                                Center(
+                                                                              child: Text(
+                                                                                "syncedLyricsNotAvailable".tr,
+                                                                                style: Theme.of(context).textTheme.titleMedium!.copyWith(
+                                                                                      fontSize: 20,
+                                                                                      color: Theme.of(context).primaryColor.withLightness(0.4),
+                                                                                    ),
+                                                                              ),
+                                                                            ),
+                                                                          ),
+                                                                        ),
+                                                            ),
+                                                            IgnorePointer(
+                                                              child: Container(
+                                                                decoration:
+                                                                    BoxDecoration(
+                                                                  borderRadius:
+                                                                      BorderRadius
+                                                                          .circular(
+                                                                              15),
+                                                                  gradient:
+                                                                      LinearGradient(
+                                                                    begin: Alignment
+                                                                        .topCenter,
+                                                                    end: Alignment
+                                                                        .bottomCenter,
+                                                                    colors: [
+                                                                      Theme.of(
+                                                                              context)
+                                                                          .primaryColor
+                                                                          .withOpacity(
+                                                                              0.90),
+                                                                      Colors
+                                                                          .transparent,
+                                                                      Colors
+                                                                          .transparent,
+                                                                      Colors
+                                                                          .transparent,
+                                                                      Theme.of(
+                                                                              context)
+                                                                          .primaryColor
+                                                                          .withOpacity(
+                                                                              0.90),
+                                                                    ],
+                                                                    stops: const [
+                                                                      0,
+                                                                      0.2,
+                                                                      0.5,
+                                                                      0.8,
+                                                                      1
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                )
+                                              : const SizedBox.shrink(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          )
+                        : Container(),
+                  ),
+                  Expanded(child: Container()),
+                  const SizedBox(height: 10),
+                  Obx(() {
+                    final buttonState = playerController.buttonState.value;
+                    final isPlaying = buttonState == PlayButtonState.playing;
+                    final showLyrics = playerController.showLyricsflag.value;
 
-          /// show player ui based on selected player ui in settings
-          /// Gesture player is only applicable for mobile
-          body: settingsScreenController.playerUi.value == 0
-              ? const StandardPlayer()
-              : const GesturePlayer(),
+                    return Visibility(
+                      visible: isPlaying &&
+                          !showLyrics, // Visible solo cuando está reproduciendo y las letras no se muestran
+                      child: _buildMusicVisualizer(colors, duration),
+                    );
+                  }),
+                  const SizedBox(height: 10),
+                  Obx(() {
+                    return MarqueeWidget(
+                      child: Text(
+                        playerController.currentSong.value != null
+                            ? playerController.currentSong.value!.title
+                            : "NA",
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelMedium,
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 10),
+                  GetX<PlayerController>(builder: (controller) {
+                    return MarqueeWidget(
+                      child: Text(
+                        playerController.currentSong.value != null
+                            ? controller.currentSong.value!.artist!
+                            : "NA",
+                        textAlign: TextAlign.center,
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.labelSmall,
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 20),
+                  GetX<PlayerController>(builder: (controller) {
+                    return CustomProgressBar(
+                      // Aquí se usa la barra de progreso personalizada
+                      currentSliderValue: controller
+                              .progressBarStatus.value.current.inSeconds
+                              .toDouble() /
+                          60,
+                      maxValue: controller
+                              .progressBarStatus.value.total.inSeconds
+                              .toDouble() /
+                          60,
+                      onChanged: (value) {
+                        controller
+                            .seek(Duration(seconds: (value * 60).toInt()));
+                      },
+                    );
+                  }),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      IconButton(
+                        onPressed: playerController.toggleFavourite,
+                        icon: Obx(() => Icon(
+                              playerController.isCurrentSongFav.isFalse
+                                  ? Icons.favorite_border_rounded
+                                  : Icons.favorite_rounded,
+                              color: Theme.of(context)
+                                  .primaryColor
+                                  .withLightness(0.5),
+                            )),
+                      ),
+                      _previousButton(playerController, context),
+                      CircleAvatar(radius: 35, child: _playButton()),
+                      _nextButton(playerController, context),
+                      Obx(() {
+                        return IconButton(
+                          onPressed: playerController.toggleLoopMode,
+                          icon: Icon(
+                            Icons.all_inclusive,
+                            color: playerController.isLoopModeEnabled.value
+                                ? Theme.of(context)
+                                    .primaryColor
+                                    .withLightness(0.5)
+                                : Theme.of(context).textTheme.titleLarge!.color,
+                          ),
+                        );
+                      }),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 90 + Get.mediaQuery.padding.bottom,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+
+  Widget _playButton() {
+    return GetX<PlayerController>(builder: (controller) {
+      final buttonState = controller.buttonState.value;
+      bool isPlaying = buttonState == PlayButtonState.playing;
+
+      return PlayButton(
+        isPlaying: isPlaying,
+        playIcon: Icon(Icons.play_arrow,
+            color: Theme.of(context).primaryColor.withLightness(0.5), size: 40),
+        pauseIcon: Icon(Icons.pause,
+            color: Theme.of(context).primaryColor.withLightness(0.5), size: 40),
+        onPressed: () {
+          if (buttonState == PlayButtonState.paused) {
+            controller.play(); // Cambiar a estado de reproducción
+          } else if (buttonState == PlayButtonState.playing) {
+            controller.pause(); // Cambiar a estado de pausa
+          }
+        },
+      );
+    });
+  }
+
+  Widget _buildMusicVisualizer(List<Color> colors, List<int> duration) {
+    final controller = _controller;
+    if (controller == null) return const SizedBox.shrink();
+
+    return SizedBox(
+      height: 50,
+      child: AnimatedBuilder(
+        animation: controller,
+        builder: (context, _) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: List.generate(30, (index) {
+              final speed = duration[index % duration.length] / 1000;
+              final phase = (controller.value * speed + index * 0.13) % 1;
+              final normalized = phase <= 0.5 ? phase * 2 : (1 - phase) * 2;
+              return Container(
+                width: 3,
+                height: 6 + normalized * 44,
+                decoration: BoxDecoration(
+                  color: colors[index % colors.length],
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              );
+            }),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _previousButton(
+      PlayerController playerController, BuildContext context) {
+    return IconButton(
+      icon: Icon(
+        Icons.skip_previous_rounded,
+        color: Theme.of(context).primaryColor.withLightness(0.5),
+      ),
+      iconSize: 30,
+      onPressed: playerController.prev,
+    );
+  }
+
+  Widget _nextButton(PlayerController playerController, BuildContext context) {
+    return Obx(() {
+      final isLastSong = playerController.currentQueue.isEmpty ||
+          (playerController.currentQueue.last.id ==
+              playerController.currentSong.value?.id);
+      return IconButton(
+        icon: Icon(
+          Icons.skip_next_rounded,
+          color: Theme.of(context).primaryColor.withLightness(0.5),
+        ),
+        iconSize: 30,
+        onPressed: isLastSong ? null : playerController.next,
+      );
+    });
   }
 }

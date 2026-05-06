@@ -16,8 +16,7 @@ class SearchResultScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final searchResScrController = Get.put(SearchResultScreenController());
-    return GetPlatform.isDesktop ||
-            Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
+    return GetPlatform.isDesktop || Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue
         ? const SearchResultScreenBN()
         : Scaffold(
             body: Row(
@@ -46,12 +45,12 @@ class SearchResultScreen extends StatelessWidget {
                                 ],
                           leading: Column(
                             children: [
-                              SizedBox(
-                                height: context.isLandscape ? 20 : 45,
+                              const SizedBox(
+                                height: 30,
                               ),
                               IconButton(
                                 icon: Icon(
-                                  Icons.arrow_back_ios_new,
+                                  Icons.arrow_back_ios_new_rounded,
                                   color: Theme.of(context)
                                       .textTheme
                                       .titleMedium!
@@ -143,13 +142,12 @@ class Body extends StatelessWidget {
       });
     } else {
       if (searchResScrController.isResultContentFetced.isTrue) {
-        final topPadding = context.isLandscape ? 50.0 : 80.0;
         final name = searchResScrController.railItems[
             searchResScrController.navigationRailCurrentIndex.value - 1];
         return SeparateTabItemWidget(
           items: const [],
           title: name,
-          topPadding: topPadding,
+          topPadding: 75,
           scrollController: searchResScrController.scrollControllers[name],
         );
       }

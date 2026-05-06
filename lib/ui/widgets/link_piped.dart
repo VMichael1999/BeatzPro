@@ -6,7 +6,6 @@ import '/services/piped_service.dart';
 import '../screens/Settings/settings_screen_controller.dart';
 import '../screens/Library/library_controller.dart';
 import 'common_dialog_widget.dart';
-import 'modified_text_field.dart';
 import 'snackbar.dart';
 
 class LinkPiped extends StatelessWidget {
@@ -47,7 +46,7 @@ class LinkPiped extends StatelessWidget {
                         })),
                   ),
                   Obx(() => pipedLinkedController.selectedInst.value == "custom"
-                      ? ModifiedTextField(
+                      ? TextField(
                           controller:
                               pipedLinkedController.instApiUrlInputController,
                           cursorColor:
@@ -55,7 +54,7 @@ class LinkPiped extends StatelessWidget {
                           decoration:
                               InputDecoration(hintText: "hintApiUrl".tr))
                       : const SizedBox.shrink()),
-                  ModifiedTextField(
+                  TextField(
                       controller: pipedLinkedController.usernameInputController,
                       cursorColor:
                           Theme.of(context).textTheme.titleSmall!.color,
@@ -63,7 +62,7 @@ class LinkPiped extends StatelessWidget {
                   const SizedBox(
                     height: 15,
                   ),
-                  Obx(() => ModifiedTextField(
+                  Obx(() => TextField(
                         controller:
                             pipedLinkedController.passwordInputController,
                         cursorColor:

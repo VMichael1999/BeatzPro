@@ -8,7 +8,7 @@
 PRODUCT_NAME = beatzpro
 
 // The application's bundle identifier
-PRODUCT_BUNDLE_IDENTIFIER = com.michaelanthonyvaldiviezomaza.beatzpro
+PRODUCT_BUNDLE_IDENTIFIER = com.anandnet.beatzpro
 
 // The copyright displayed in application information
-PRODUCT_COPYRIGHT = Copyright © 2026 Michael Anthony Valdiviezo Maza. All rights reserved.
+PRODUCT_COPYRIGHT = Copyright © 2024 com.anandnet. All rights reserved.

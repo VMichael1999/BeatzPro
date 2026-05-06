@@ -25,3 +25,7 @@ Una aplicación multiplataforma para transmisión de música hecha con Flutter (
 
 ###
 ![cover](https://github.com/user-attachments/assets/4bc8b4cd-cd5e-472e-80e1-52b9ea90b5f4)
+
+
+
+

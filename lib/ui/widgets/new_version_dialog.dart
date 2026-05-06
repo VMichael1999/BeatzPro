@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
-
 import '../screens/Home/home_screen_controller.dart';
 import 'common_dialog_widget.dart';
 
@@ -27,16 +26,17 @@ class NewVersionDialog extends StatelessWidget {
                   dimension: 100,
                   child: FittedBox(
                     child: FloatingActionButton(
+                      heroTag: null,
                       onPressed: () {
                         launchUrl(
                           Uri.parse(
-                            'https://github.com/VMichael1999/BeatzPro/releases/latest',
+                            'https://github.com/Michaelabx01',
                           ),
                           mode: LaunchMode.externalApplication,
                         );
                       },
                       child: const Icon(
-                        Icons.download,
+                        Icons.download_rounded,
                         size: 30,
                       ),
                     ),

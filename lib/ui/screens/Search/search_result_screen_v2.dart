@@ -15,11 +15,10 @@ class SearchResultScreenBN extends StatelessWidget {
   Widget build(BuildContext context) {
     final SearchResultScreenController searchResScrController =
         Get.find<SearchResultScreenController>();
-    final topPadding = context.isLandscape ? 50.0 : 80.0;
     return Scaffold(
       body: Padding(
-          padding: EdgeInsets.only(
-            top: topPadding,
+          padding: const EdgeInsets.only(
+            top: 85,
           ),
           child: Column(
             children: [
@@ -91,12 +90,9 @@ class SearchResultScreenBN extends StatelessWidget {
                               controller: searchResScrController.tabController,
                               contentPadding:
                                   const EdgeInsets.only(left: 15, right: 15),
-                              backgroundColor: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
-                                  ?.color!,
-                              unselectedBackgroundColor:
-                                  Theme.of(context).colorScheme.secondary,
+                              backgroundColor:
+                                  Theme.of(context).textTheme.titleMedium?.color!,
+                              unselectedBackgroundColor:  Theme.of(context).colorScheme.secondary,
                               borderWidth: 0,
                               buttonMargin: const EdgeInsets.only(
                                   right: 10, left: 4, top: 4, bottom: 4),

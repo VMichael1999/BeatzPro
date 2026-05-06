@@ -1,7 +1,7 @@
-display_name: beatzpro
+display_name: BeatzPro
 package_name: beatzpro
 maintainer:
-  name: Michael Anthony Valdiviezo Maza
+  name: anandnet
 priority: optional
 section: x11
 installed_size: 20000

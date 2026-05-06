@@ -4,7 +4,6 @@ import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../models/playling_from.dart';
 import '/ui/widgets/songinfo_bottom_sheet.dart';
 import '/utils/helper.dart';
 import '../ui/widgets/loader.dart';
@@ -13,7 +12,7 @@ import '/ui/player/player_controller.dart';
 import '../ui/navigator.dart';
 import '../ui/widgets/snackbar.dart';
 
-class AppLinksController extends GetxController with ProcessLink {
+class AppLinksController extends GetxController {
   late AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
 
@@ -38,21 +37,13 @@ class AppLinksController extends GetxController with ProcessLink {
     });
   }
 
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    super.dispose();
-  }
-}
-
-mixin ProcessLink {
   Future<void> filterLinks(Uri uri) async {
     final playerController = Get.find<PlayerController>();
     if (playerController.playerPanelController.isPanelOpen) {
       playerController.playerPanelController.close();
     }
 
-    if (Get.isRegistered<SongInfoController>()) {
+    if(Get.isRegistered<SongInfoController>()){
       Navigator.of(Get.context!).pop();
     }
 
@@ -91,11 +82,11 @@ mixin ProcessLink {
 
   Future<void> openPlaylistOrAlbum(String browseId) async {
     if (browseId.contains("OLAK5uy")) {
-      Get.toNamed(ScreenNavigationSetup.albumScreen,
-          id: ScreenNavigationSetup.id, arguments: (null, browseId));
+      Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
+          id: ScreenNavigationSetup.id, arguments: [true, browseId, true]);
     } else {
-      Get.toNamed(ScreenNavigationSetup.playlistScreen,
-          id: ScreenNavigationSetup.id, arguments: [null, browseId]);
+      Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
+          id: ScreenNavigationSetup.id, arguments: [false, browseId, true]);
     }
   }
 
@@ -115,12 +106,17 @@ mixin ProcessLink {
     final result = await Get.find<MusicServices>().getSongWithId(songId);
     Navigator.of(Get.context!).pop();
     if (result[0]) {
-      Get.find<PlayerController>().playPlayListSong(List.from(result[1]), 0,
-          playfrom: PlaylingFrom(type: PlaylingFromType.SELECTION));
+      Get.find<PlayerController>().playPlayListSong(List.from(result[1]), 0);
     } else {
       ScaffoldMessenger.of(Get.context!).showSnackBar(snackbar(
           Get.context!, "notaSongVideo".tr,
           size: SanckBarSize.MEDIUM));
     }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
   }
 }

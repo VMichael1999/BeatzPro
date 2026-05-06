@@ -1,14 +1,12 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:widget_marquee/widget_marquee.dart';
 
 import '/services/piped_service.dart';
 import '../screens/Library/library_controller.dart';
 import '/ui/widgets/snackbar.dart';
 import '../../models/playlist.dart';
 import 'common_dialog_widget.dart';
-import 'modified_text_field.dart';
 
 class CreateNRenamePlaylistPopup extends StatelessWidget {
   const CreateNRenamePlaylistPopup(
@@ -40,15 +38,11 @@ class CreateNRenamePlaylistPopup extends StatelessWidget {
                 padding: const EdgeInsets.only(bottom: 5),
                 child: Align(
                   alignment: Alignment.centerLeft,
-                  child: Marquee(
-                    delay: const Duration(milliseconds: 300),
-                    id: "createPlaylist",
-                    child: Text(
-                      renamePlaylist
-                          ? "renamePlaylist".tr
-                          : "CreateNewPlaylist".tr,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                  child: Text(
+                    renamePlaylist
+                        ? "renamePlaylist".tr
+                        : "CreateNewPlaylist".tr,
+                    style: Theme.of(context).textTheme.titleMedium,
                   ),
                 ),
               ),
@@ -83,18 +77,13 @@ class CreateNRenamePlaylistPopup extends StatelessWidget {
                     ],
                   ),
                 ),
-              ModifiedTextField(
-                textCapitalization: TextCapitalization.sentences,
-                autofocus: true,
-                cursorColor: Theme.of(context).textTheme.titleSmall!.color,
-                controller: librPlstCntrller.textInputController,
-                decoration: const InputDecoration(
-                  contentPadding: EdgeInsets.only(left: 5),
-                  focusColor: Colors.white,
-                ),
-              ),
+              TextField(
+                  textCapitalization: TextCapitalization.sentences,
+                  autofocus: true,
+                  cursorColor: Theme.of(context).textTheme.titleSmall!.color,
+                  controller: librPlstCntrller.textInputController),
               Padding(
-                padding: const EdgeInsets.only(top: 20.0),
+                padding: const EdgeInsets.only(top: 15.0),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
@@ -129,7 +118,6 @@ class CreateNRenamePlaylistPopup extends StatelessWidget {
                                 .renamePlaylist(playlist!)
                                 .then((value) {
                               if (value) {
-                                if (!context.mounted) return;
                                 Navigator.of(context).pop();
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     snackbar(context, "playlistRenameAlert".tr,
@@ -142,7 +130,6 @@ class CreateNRenamePlaylistPopup extends StatelessWidget {
                                     createPlaylistNaddSong: isCreateNadd,
                                     songItems: songItems)
                                 .then((value) {
-                              if (!context.mounted) return;
                               if (value) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                     snackbar(

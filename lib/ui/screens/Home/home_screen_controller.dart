@@ -25,7 +25,6 @@ class HomeScreenController extends GetxController {
   final showVersionDialog = true.obs;
   //isHomeScreenOnTop var only useful if bottom nav enabled
   final isHomeSreenOnTop = true.obs;
-  final List<ScrollController> contentScrollControllers = [];
   bool reverseAnimationtransiton = false;
 
   @override
@@ -44,8 +43,7 @@ class HomeScreenController extends GetxController {
 
       if (loaded) {
         final currTimeSecsDiff = DateTime.now().millisecondsSinceEpoch -
-            (box.get("homeScreenDataTime") ??
-                DateTime.now().millisecondsSinceEpoch);
+            box.get("homeScreenDataTime");
         if (currTimeSecsDiff / 1000 > 3600 * 8) {
           loadContentFromNetwork(silent: true);
         }
@@ -103,16 +101,12 @@ class HomeScreenController extends GetxController {
               List<MediaItem>.from(homeContentListMap[index]["contents"]),
               title: "Trending");
         } else if (index == -1) {
-          List charts = await _musicServices.getCharts(contentType);
-          final index = charts.indexWhere((element) =>
-              element['title'] ==
-              (contentType == "TMV" ? "Top Music Videos" : "Trending"));
-          if (index != -1) {
-            quickPicks.value = QuickPicks(
-                List<MediaItem>.from(charts[index]["contents"]),
-                title: charts[index]['title']);
-            middleContentTemp.addAll(charts);
-          }
+          List charts = await _musicServices.getCharts();
+          final con =
+              charts.length == 4 ? charts.removeAt(3) : charts.removeAt(2);
+          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]),
+              title: con['title']);
+          middleContentTemp.addAll(charts);
         }
       } else if (contentType == "TMV") {
         final index = homeContentListMap
@@ -122,41 +116,33 @@ class HomeScreenController extends GetxController {
           quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]),
               title: con["title"]);
         } else if (index == -1) {
-          List charts = await _musicServices.getCharts(contentType);
-          final index = charts.indexWhere((element) =>
-              element['title'] ==
-              (contentType == "TMV" ? "Top Music Videos" : "Trending"));
-          if (index != -1) {
-            quickPicks.value = QuickPicks(
-                List<MediaItem>.from(charts[index]["contents"]),
-                title: charts[index]["title"]);
-            middleContentTemp.addAll(charts);
-          }
+          List charts = await _musicServices.getCharts();
+          quickPicks.value = QuickPicks(
+              List<MediaItem>.from(charts[0]["contents"]),
+              title: charts[0]["title"]);
+          middleContentTemp.addAll(charts.sublist(1));
         }
       } else if (contentType == "BOLI") {
-        try {
-          final songId = box.get("recentSongId");
-          if (songId != null) {
-            final rel = (await _musicServices.getContentRelatedToSong(
-                songId, getContentHlCode()));
-            final con = rel.removeAt(0);
-            quickPicks.value =
-                QuickPicks(List<MediaItem>.from(con["contents"]));
-            middleContentTemp.addAll(rel);
-          }
-        } catch (e) {
-          printERROR(
-              "Seems Based on last interaction content currently not available!");
+        final songId = box.get("recentSongId");
+        if (songId != null) {
+          final rel = (await _musicServices.getContentRelatedToSong(songId));
+          final con = rel.removeAt(0);
+          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]));
+          middleContentTemp.addAll(rel);
         }
       }
 
       if (quickPicks.value.songList.isEmpty) {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Quick picks");
-        final fallbackIndex = index != -1 ? index : 0;
-        if (homeContentListMap.isNotEmpty) {
+        final fallbackIndex = index == -1
+            ? homeContentListMap.indexWhere((element) =>
+                (element["contents"] as List).whereType<MediaItem>().isNotEmpty)
+            : index;
+        if (fallbackIndex != -1) {
           final con = homeContentListMap.removeAt(fallbackIndex);
-          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]),
+          quickPicks.value = QuickPicks(
+              (con["contents"] as List).whereType<MediaItem>().toList(),
               title: con["title"] ?? "Quick picks");
         }
       }
@@ -170,9 +156,8 @@ class HomeScreenController extends GetxController {
       cachedHomeScreenData(updateAll: true);
       await Hive.box("AppPrefs")
           .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
-      // ignore: unused_catch_stack
-    } on NetworkError catch (r, e) {
-      printERROR("Home Content not loaded due to ${r.message}");
+    } on NetworkError catch (error, _) {
+      printERROR("Home Content not loaded due to ${error.message}");
       await Future.delayed(const Duration(seconds: 1));
       networkError.value = !silent;
     }
@@ -183,7 +168,7 @@ class HomeScreenController extends GetxController {
   ) {
     List contentTemp = [];
     for (var content in contents) {
-      if ((content["contents"]).isEmpty) continue;
+      if (content["contents"].isEmpty) continue;
       if ((content["contents"][0]).runtimeType == Playlist) {
         final tmp = PlaylistContent(
             playlistList: (content["contents"]).whereType<Playlist>().toList(),
@@ -212,10 +197,12 @@ class HomeScreenController extends GetxController {
           title: homeContentListMap[0]["title"]);
     } else if (val == "TMV" || val == 'TR') {
       try {
-        final charts = await _musicServices.getCharts(val);
-        final index = charts.indexWhere((element) =>
-            element['title'] ==
-            (val == "TMV" ? "Top Music Videos" : "Trending"));
+        final charts = await _musicServices.getCharts();
+        final index = val == "TMV"
+            ? 0
+            : charts.length == 4
+                ? 3
+                : 2;
         quickPicks_ = QuickPicks(
             List<MediaItem>.from(charts[index]["contents"]),
             title: charts[index]["title"]);
@@ -227,8 +214,7 @@ class HomeScreenController extends GetxController {
       songId ??= Hive.box("AppPrefs").get("recentSongId");
       if (songId != null) {
         try {
-          final value = await _musicServices.getContentRelatedToSong(
-              songId, getContentHlCode());
+          final value = await _musicServices.getContentRelatedToSong(songId);
           middleContent.value = _setContentList(value);
           if (value.isNotEmpty && (value[0]['title']).contains("like")) {
             quickPicks_ =
@@ -247,13 +233,6 @@ class HomeScreenController extends GetxController {
     cachedHomeScreenData(updateQuickPicksNMiddleContent: true);
     await Hive.box("AppPrefs")
         .put("homeScreenDataTime", DateTime.now().millisecondsSinceEpoch);
-  }
-
-  String getContentHlCode() {
-    const List<String> unsupportedLangIds = ["ia", "ga", "fj", "eo"];
-    final userLangId =
-        Get.find<SettingsScreenController>().currentAppLanguageCode.value;
-    return unsupportedLangIds.contains(userLangId) ? "en" : userLangId;
   }
 
   void onSideBarTabSelected(int index) {
@@ -286,9 +265,7 @@ class HomeScreenController extends GetxController {
     showVersionDialog.value = !val;
   }
 
-  ///This is used to minimized bottom navigation bar by setting [isHomeSreenOnTop.value] to `true` and set mini player height.
-  ///
-  ///and applicable/useful if bottom nav enabled
+  ///this fn only useful if bottom nav enabled
   void whenHomeScreenOnTop() {
     if (Get.find<SettingsScreenController>().isBottomNavBarEnabled.isTrue) {
       final currentRoute = getCurrentRouteName();
@@ -359,21 +336,5 @@ class HomeScreenController extends GetxController {
         }
       }).toList();
     }
-  }
-
-  void disposeDetachedScrollControllers({bool disposeAll = false}) {
-    final scrollControllersCopy = contentScrollControllers.toList();
-    for (final contoller in scrollControllersCopy) {
-      if (!contoller.hasClients || disposeAll) {
-        contentScrollControllers.remove(contoller);
-        contoller.dispose();
-      }
-    }
-  }
-
-  @override
-  void dispose() {
-    disposeDetachedScrollControllers(disposeAll: true);
-    super.dispose();
   }
 }

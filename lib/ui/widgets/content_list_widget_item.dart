@@ -19,19 +19,12 @@ class ContentListItem extends StatelessWidget {
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
       onTap: () {
-        if (isAlbum) {
-          Get.toNamed(ScreenNavigationSetup.albumScreen,
-              id: ScreenNavigationSetup.id, arguments:(content, content.browseId));
-          return;
-        }
-        Get.toNamed(ScreenNavigationSetup.playlistScreen,
-            id: ScreenNavigationSetup.id,
-            arguments: [content, content.playlistId]);
+        Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
+            id: ScreenNavigationSetup.id, arguments: [isAlbum, content, false]);
       },
       child: Container(
-        width: 130,
-        height: 180,
-        padding: const EdgeInsets.symmetric(horizontal: 5),
+        width: 120,
+        padding: const EdgeInsets.all(0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -40,11 +33,7 @@ class ContentListItem extends StatelessWidget {
                     size: 120,
                     album: content,
                   )
-                : content.isCloudPlaylist ||
-                        !(content.playlistId == 'LIBRP' ||
-                            content.playlistId == 'LIBFAV' ||
-                            content.playlistId == 'SongsCache' ||
-                            content.playlistId == 'SongDownloads')
+                : content.isCloudPlaylist
                     ? SizedBox.square(
                         dimension: 120,
                         child: Stack(
@@ -77,31 +66,6 @@ class ContentListItem extends StatelessWidget {
                                     )),
                                   ),
                                 ),
-                              ),
-                            if (!content.isCloudPlaylist)
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Container(
-                                    height: 18,
-                                    width: 18,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondary,
-                                    ),
-                                    child: Center(
-                                        child: Text(
-                                      "L",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium!
-                                          .copyWith(fontSize: 14),
-                                    )),
-                                  ),
-                                ),
                               )
                           ],
                         ),
@@ -115,40 +79,35 @@ class ContentListItem extends StatelessWidget {
                         child: Center(
                             child: Icon(
                           content.playlistId == 'LIBRP'
-                              ? Icons.history
+                              ? Icons.history_rounded
                               : content.playlistId == 'LIBFAV'
-                                  ? Icons.favorite
+                                  ? Icons.favorite_rounded
                                   : content.playlistId == 'SongsCache'
-                                      ? Icons.flight
-                                      : Icons.download,
+                                      ? Icons.flight_rounded
+                                      : content.playlistId == 'SongDownloads'
+                                          ? Icons.download
+                                          : Icons.playlist_play_rounded,
                           color: Colors.white,
                           size: 40,
                         ))),
             const SizedBox(height: 5),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    content.title,
-                    // overflow: TextOverflow.ellipsis,
-                    maxLines: 2,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Text(
-                    isAlbum
-                        ? isLibraryItem
-                            ? ""
-                            : "${content.artists[0]['name'] ?? ""} | ${content.year ?? ""}"
-                        : isLibraryItem
-                            ? ""
-                            : content.description ?? "",
-                    maxLines: 1,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ],
-              ),
-            )
+            Text(
+              content.title,
+              // overflow: TextOverflow.ellipsis,
+              maxLines: 2,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+            Text(
+              isAlbum
+                  ? isLibraryItem
+                      ? ""
+                      : "${content.artists[0]['name'] ?? ""} | ${content.year ?? ""}"
+                  : isLibraryItem
+                      ? ""
+                      : content.description ?? "",
+              maxLines: 1,
+              style: Theme.of(context).textTheme.titleSmall,
+            ),
           ],
         ),
       ),

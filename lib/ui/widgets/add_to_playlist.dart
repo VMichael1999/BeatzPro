@@ -2,7 +2,6 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:hive/hive.dart';
-import 'package:widget_marquee/widget_marquee.dart';
 
 import '../../services/piped_service.dart';
 import '/models/media_Item_builder.dart';
@@ -35,19 +34,16 @@ class AddToPlaylist extends StatelessWidget {
                     Expanded(
                       child: Padding(
                         padding: const EdgeInsets.only(left: 8.0),
-                        child: Marquee(
-                          id:"createNewPlaylistx",
-                          delay: const Duration(milliseconds: 300),
-                          child: Text(
-                            "CreateNewPlaylist".tr,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
+                        child: Text(
+                          "CreateNewPlaylist".tr,
+                          style: Theme.of(context).textTheme.titleMedium,
+                          softWrap: true,
+                          overflow: TextOverflow.visible,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10,),
                     InkWell(
-                      child: const Icon(Icons.playlist_add),
+                      child: const Icon(Icons.playlist_add_rounded),
                       onTap: () {
                         Navigator.of(context).pop();
                         showDialog(
@@ -56,7 +52,7 @@ class AddToPlaylist extends StatelessWidget {
                               isCreateNadd: true, songItems: songItems),
                         );
                       },
-                    )
+                    ),
                   ],
                 ),
               ),
@@ -104,7 +100,7 @@ class AddToPlaylist extends StatelessWidget {
                       ? ListView.builder(
                           itemCount: addToPlaylistController.playlists.length,
                           itemBuilder: (context, index) => ListTile(
-                            leading: const Icon(Icons.playlist_play),
+                            leading: const Icon(Icons.playlist_play_rounded),
                             title: Text(
                               (addToPlaylistController.playlists[index]).title,
                             ),
@@ -116,7 +112,6 @@ class AddToPlaylist extends StatelessWidget {
                                           .playlistId,
                                       context)
                                   .then((value) {
-                                if (!context.mounted) return;
                                 if (value) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                       snackbar(context,
@@ -221,26 +216,4 @@ class AddToPlaylistController extends GetxController {
       return (res.code == 1);
     }
   }
-
-  // Future<bool> addSongToPlaylist(
-  //     MediaItem song, String playlistId, BuildContext context) async {
-  //   if (playlistType.value == "local") {
-  //     final plstBox = await Hive.openBox(playlistId);
-  //     if (!plstBox.containsKey(song.id)) {
-  //       plstBox.put(song.id, MediaItemBuilder.toJson(song));
-  //       plstBox.close();
-  //       return true;
-  //     } else {
-  //       plstBox.close();
-  //       return false;
-  //     }
-  //   } else {
-  //     additionInProgress.value = true;
-
-  //     final res =
-  //         await Get.find<PipedServices>().addToPlaylist(playlistId, song.id);
-  //     additionInProgress.value = false;
-  //     return (res.code == 1);
-  //   }
-  // }
 }

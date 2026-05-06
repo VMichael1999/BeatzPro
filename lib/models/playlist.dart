@@ -1,5 +1,3 @@
-import 'package:audio_service/audio_service.dart' show MediaItem;
-
 import '../models/thumbnail.dart';
 
 class PlaylistContent {
@@ -33,18 +31,14 @@ class Playlist {
   String title;
   final bool isPipedPlaylist;
   final String? description;
-  String thumbnailUrl;
+  final String thumbnailUrl;
   final String? songCount;
   final bool isCloudPlaylist;
-  static const thumbPlaceholderUrl =
-      "https://raw.githubusercontent.com/VMichael1999/BeatzPro/refs/heads/main/playlist_placeholder.png";
 
   factory Playlist.fromJson(Map<dynamic, dynamic> json) => Playlist(
       title: json["title"],
       playlistId: json["playlistId"] ?? json["browseId"],
-      thumbnailUrl: (json["thumbnails"][0]["url"]).isEmpty
-          ? Thumbnail(thumbPlaceholderUrl).extraHigh
-          : Thumbnail(json["thumbnails"][0]["url"]).extraHigh,
+      thumbnailUrl: Thumbnail(json["thumbnails"][0]["url"]).medium,
       description: json["description"] ?? "Playlist",
       songCount: json['itemCount'],
       isPipedPlaylist: json["isPipedPlaylist"] ?? false,
@@ -61,27 +55,6 @@ class Playlist {
         "isPipedPlaylist": isPipedPlaylist,
         "isCloudPlaylist": isCloudPlaylist
       };
-
-  Playlist copyWith({String? title, String? thumbnailUrl}) {
-    return Playlist(
-        title: title ?? this.title,
-        playlistId: playlistId,
-        thumbnailUrl: thumbnailUrl ?? this.thumbnailUrl,
-        description: description,
-        songCount: songCount,
-        isPipedPlaylist: isPipedPlaylist,
-        isCloudPlaylist: isCloudPlaylist);
-  }
-
-  // Converts this object to a MediaItem object.
-  // This is used to display the playlist in Android auto.
-  MediaItem toMediaItem() {
-    return MediaItem(
-        id: playlistId,
-        title: title,
-        artUri: Uri.parse(thumbnailUrl),
-        playable: false);
-  }
 
   set newTitle(String title) {
     this.title = title;

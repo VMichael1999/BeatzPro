@@ -1,7 +1,7 @@
 app_id: B9F6E402-0CAE-4045-BDE6-14BD6C39C4EA
-publisher: Michael Anthony Valdiviezo Maza
-publisher_url: https://github.com/VMichael1999/BeatzPro
-display_name: beatzpro
+publisher: anandnet
+publisher_url: https://github.com/anandnet/Harmony-Music
+display_name: BeatzPro
 create_desktop_icon: true
 privileges_required: lowest
 script_template: inno_setup.iss

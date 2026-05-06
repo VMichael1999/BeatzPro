@@ -1,19 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:widget_marquee/widget_marquee.dart';
 
+import '/ui/screens/Artists/artist_screen_controller.dart';
+import '/ui/screens/Library/library_controller.dart';
+import '/ui/screens/PlaylistNAlbum/playlistnalbum_screen_controller.dart';
 import '/ui/widgets/sort_widget.dart' show OperationMode;
 import 'image_widget.dart';
+import 'marqwee_widget.dart';
 
 class ModificationList extends StatelessWidget {
   const ModificationList(
-      {super.key, required this.mode, this.screenController});
+      {super.key,
+      required this.mode,
+      this.librarySongsController,
+      this.playListNAlbumScreenController,this.artistScreenController});
   final OperationMode mode;
-  final dynamic screenController;
+  final PlayListNAlbumScreenController? playListNAlbumScreenController;
+  final LibrarySongsController? librarySongsController;
+  final ArtistScreenController? artistScreenController;
 
   @override
   Widget build(BuildContext context) {
-    final items = screenController.additionalOperationTempList;
+    dynamic controller = librarySongsController ?? playListNAlbumScreenController ?? artistScreenController;
+    final items = controller!.additionalOperationTempList;
     if (mode == OperationMode.arrange) {
       return Expanded(
         child: ReorderableListView.builder(
@@ -27,10 +36,7 @@ class ModificationList extends StatelessWidget {
                     size: 55,
                     song: items[index],
                   ),
-                  title: Marquee(
-                    delay: const Duration(milliseconds: 300),
-                    duration: const Duration(seconds: 5),
-                    id: items[index].title.hashCode.toString(),
+                  title: MarqueeWidget(
                     child: Text(
                       items[index].title.length > 50
                           ? items[index].title.substring(0, 50)
@@ -55,7 +61,7 @@ class ModificationList extends StatelessWidget {
                 old_,
               );
               list.insert(new_, item);
-              screenController.additionalOperationTempList.value = list;
+              controller.additionalOperationTempList.value = list;
             }),
       );
     } else if (mode == OperationMode.addToPlaylist ||
@@ -66,9 +72,8 @@ class ModificationList extends StatelessWidget {
           itemCount: items.length,
           itemBuilder: (context, index) => ListTile(
             onTap: () {
-              screenController.additionalOperationTempMap[index] =
-                  !screenController.additionalOperationTempMap[index]!;
-              screenController.checkIfAllSelected();
+              controller.additionalOperationTempMap[index] = !controller.additionalOperationTempMap[index]!;
+              controller.checkIfAllSelected();
             },
             contentPadding: const EdgeInsets.only(top: 0, left: 5, right: 30),
             leading: SizedBox(
@@ -78,12 +83,11 @@ class ModificationList extends StatelessWidget {
                 children: [
                   Obx(
                     () => Checkbox(
-                      tristate: true,
-                      value: screenController.additionalOperationTempMap[index],
+                      value: controller.additionalOperationTempMap[index],
                       onChanged: (val) {
-                        screenController.additionalOperationTempMap[index] =
+                        controller.additionalOperationTempMap[index] =
                             val!;
-                        screenController.checkIfAllSelected();
+                        controller.checkIfAllSelected();
                       },
                       visualDensity:
                           const VisualDensity(horizontal: -3, vertical: -3),
@@ -98,10 +102,7 @@ class ModificationList extends StatelessWidget {
                 ],
               ),
             ),
-            title: Marquee(
-              delay: const Duration(milliseconds: 300),
-              duration: const Duration(seconds: 5),
-              id: items[index].title.hashCode.toString(),
+            title: MarqueeWidget(
               child: Text(
                 items[index].title.length > 50
                     ? items[index].title.substring(0, 50)

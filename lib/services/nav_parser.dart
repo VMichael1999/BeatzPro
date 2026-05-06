@@ -131,15 +131,6 @@ const List<dynamic> thumnail_cropped = [
 const subtitle = ['subtitle', 'runs', 0, 'text'];
 const subtitle3 = ['subtitle', 'runs', 4, 'text'];
 const feedback_token = ['feedbackEndpoint', 'feedbackToken'];
-const musicPlaylistShelfRenderer = [
-  "contents",
-  "twoColumnBrowseResultsRenderer",
-  "secondaryContents",
-  "sectionListRenderer",
-  "contents",
-  0,
-  "musicPlaylistShelfRenderer",
-];
 
 List<Map<String, dynamic>> parseMixedContent(List<dynamic> rows) {
   List<Map<String, dynamic>> items = [];
@@ -471,8 +462,7 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
     {List<List<dynamic>>? menuEntries,
     dynamic thumbnailsM,
     dynamic artistsM,
-    String? albumYear,
-    dynamic albumIdName,
+    dynamic albumIdM,
     bool isAlbum = false}) {
   List<MediaItem> songs = [];
 
@@ -483,53 +473,26 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
       continue;
     }
     dynamic data = result['musicResponsiveListItemRenderer'];
-    String? videoId;
-    String? trackDetails;
-
-    videoId = nav(data, ['playlistItemData', 'videoId']);
-
-    if (videoId == null && isAlbum) {
-      final creditId = nav(data, [
-        'menu',
-        'menuRenderer',
-        'items',
-        5,
-        'menuNavigationItemRenderer',
-        'navigationEndpoint',
-        'browseEndpoint',
-        'browseId'
-      ]);
-      videoId = creditId?.split("MPTC")[1];
-      
-    }
-
-    if(isAlbum){
-      // Contains track number and total tracks 
-      trackDetails = data?["index"] != null
-          ? "${nav(data, ['index', 'runs', 0, 'text'])}/${results.length}"
-          : null;
-    }
+    dynamic videoId;
 
     // if the item has a menu, find its setVideoId
-    if (videoId == null) {
-      if (data.containsKey('menu')) {
-        for (dynamic item in nav(data, menu_items)) {
-          if (item.containsKey('menuServiceItemRenderer')) {
-            dynamic menuService = nav(item, menu_service);
-            //inspect(menuService);
+    if (data.containsKey('menu')) {
+      for (dynamic item in nav(data, menu_items)) {
+        if (item.containsKey('menuServiceItemRenderer')) {
+          dynamic menuService = nav(item, menu_service);
+          //inspect(menuService);
 
-            if (menuService.containsKey('playlistEditEndpoint')) {
-              videoId = menuService['playlistEditEndpoint']['actions'][0]
-                  ['removedVideoId'];
-              // print("$videoId");
-            }
+          if (menuService.containsKey('playlistEditEndpoint')) {
+            videoId = menuService['playlistEditEndpoint']['actions'][0]
+                ['removedVideoId'];
+            // print("$videoId");
           }
         }
       }
     }
 
     // if item is not playable, the videoId was retrieved above
-    if (videoId == null && nav(data, play_button) != null) {
+    if (nav(data, play_button) != null) {
       if (nav(data, play_button).containsKey('playNavigationEndpoint')) {
         videoId = nav(data, play_button)['playNavigationEndpoint']
             ['watchEndpoint']['videoId'];
@@ -543,7 +506,7 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
 
     List? artists = parseSongArtists(data, 1);
 
-    dynamic album = isAlbum ? albumIdName : parseSongAlbum({...data}, 2);
+    dynamic album = isAlbum ? {"id": albumIdM} : parseSongAlbum({...data}, 2);
 
     dynamic duration;
     if (data.containsKey('fixedColumns')) {
@@ -573,7 +536,6 @@ List<dynamic> parsePlaylistItems(List<dynamic> results,
       'artists': artists ?? artistsM,
       'thumbnails': isAlbum ? thumbnailsM : thumbnails_ ?? thumbnailsM,
       'isAvailable': isAvailable,
-      'trackDetails': trackDetails
     };
 
     if (duration != null) {
@@ -711,9 +673,9 @@ List<dynamic> parseSearchResults(List<dynamic> results,
 }
 
 dynamic parseSearchResult(Map<String, dynamic> data,
-    List<String> searchResultTypes, String? resultType, String? category) {
+    List<String> searchResultTypes, String? resultType, String category) {
   if ((resultType != null && resultType.contains("playlist")) ||
-      category!.contains("playlists")) {
+      category.contains("playlists")) {
     resultType = 'playlist';
   }
   int defaultOffset = (resultType == null) ? 2 : 0;
@@ -988,20 +950,6 @@ dynamic parseContentList(results, Function parseFunc) {
   }
 
   return contents;
-}
-
-Map<String, dynamic> parseChartsItemBrowseId(dynamic result) {
-  final title = nav(result,["musicTwoRowItemRenderer","title","runs",0,"text"]);
-  final browseId = nav(result,
-      ["musicTwoRowItemRenderer","title","runs",0,"navigationEndpoint","browseEndpoint","browseId"]);
-  if (title.contains('Trending')) {
-    return {'title': "Trending", 'browseId': browseId};
-  } else if (title.contains('Daily Top')) {
-    return {'title': "Top Music Videos", 'browseId': browseId};
-  }
-  else{
-    return {'title': title, 'browseId': browseId};
-  }
 }
 
 Map<String, dynamic> parseChartsItem(dynamic result) {
