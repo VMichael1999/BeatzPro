@@ -27,6 +27,14 @@ subprojects { project ->
         }
     }
 }
+subprojects { project ->
+    afterEvaluate {
+        def androidExt = project.extensions.findByName("android")
+        if (androidExt != null && androidExt.hasProperty("compileSdk")) {
+            androidExt.compileSdk = 36
+        }
+    }
+}
 subprojects {
     project.evaluationDependsOn(':app')
 }

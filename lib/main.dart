@@ -50,7 +50,7 @@ class MyApp extends StatelessWidget {
     });
     return GetX<ThemeController>(builder: (controller) {
       return GetMaterialApp(
-          title: 'BeatzPro',
+          title: 'BeatzPro - Music Player',
           theme: controller.themedata.value,
           home: SplashScreen(), // Cambiado a SplashScreen
           debugShowCheckedModeBanner: false,

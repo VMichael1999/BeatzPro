@@ -1,4 +1,4 @@
-package com.anandnet.beatzpro
+package com.beatzpro.app
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,8 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
         xmlns:tools="http://schemas.android.com/tools"
-    package="com.anandnet.beatzpro">
+    package="com.beatzpro.app">
    <application
-        android:label="BeatzPro"
+        android:label="BeatzPro - Music Player"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"

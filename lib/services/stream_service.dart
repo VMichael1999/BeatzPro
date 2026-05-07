@@ -2,6 +2,8 @@ import 'dart:io';
 
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+bool get _usesAppleAudioBackend => Platform.isIOS || Platform.isMacOS;
+
 class StreamProvider {
   final bool playable;
   final List<Audio>? audioFormats;
@@ -67,10 +69,12 @@ class StreamProvider {
   Audio? get highestQualityAudio =>
       audioFormats == null || audioFormats!.isEmpty
           ? null
-          : audioFormats!.lastWhere(
-              (item) => item.itag == 251 || item.itag == 140,
-              orElse: () => audioFormats!.first,
-            );
+          : _usesAppleAudioBackend
+              ? highestBitrateMp4aAudio
+              : audioFormats!.lastWhere(
+                  (item) => item.itag == 251 || item.itag == 140,
+                  orElse: () => audioFormats!.first,
+                );
 
   Audio? get highestBitrateMp4aAudio =>
       audioFormats == null || audioFormats!.isEmpty
@@ -90,10 +94,15 @@ class StreamProvider {
 
   Audio? get lowQualityAudio => audioFormats == null || audioFormats!.isEmpty
       ? null
-      : audioFormats!.lastWhere(
-          (item) => item.itag == 249 || item.itag == 139,
-          orElse: () => audioFormats!.first,
-        );
+      : _usesAppleAudioBackend
+          ? audioFormats!.lastWhere(
+              (item) => item.itag == 139,
+              orElse: () => highestBitrateMp4aAudio ?? audioFormats!.first,
+            )
+          : audioFormats!.lastWhere(
+              (item) => item.itag == 249 || item.itag == 139,
+              orElse: () => audioFormats!.first,
+            );
 
   List<String>? get legacyUrlList {
     if (!playable || audioFormats == null || audioFormats!.isEmpty) {

@@ -1,4 +1,8 @@
-import 'package:beatzpro/services/stream_service.dart' show Audio;
+import 'dart:io';
+
+import 'package:beatzpro/services/stream_service.dart' show Audio, Codec;
+
+bool get _usesAppleAudioBackend => Platform.isIOS || Platform.isMacOS;
 
 class HMStreamingData {
   final bool playable;
@@ -18,7 +22,18 @@ class HMStreamingData {
     qualityIndex = index;
   }
 
-  Audio? get audio => qualityIndex == 0 ? lowQualityAudio : highQualityAudio;
+  Audio? get audio {
+    if (_usesAppleAudioBackend) {
+      if (highQualityAudio?.audioCodec == Codec.mp4a) {
+        return highQualityAudio;
+      }
+      if (lowQualityAudio?.audioCodec == Codec.mp4a) {
+        return lowQualityAudio;
+      }
+      return null;
+    }
+    return qualityIndex == 0 ? lowQualityAudio : highQualityAudio;
+  }
 
   factory HMStreamingData.fromJson(json) {
     if (json is! Map || json['playable'] != true) {

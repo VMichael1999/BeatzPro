@@ -38,9 +38,10 @@ class _SplashScreenState extends State<SplashScreen> {
                   width: 260,
                   height: 260,
                 ),
-                const SizedBox(height: 20), // Espacio entre la imagen y el texto
+                const SizedBox(
+                    height: 20), // Espacio entre la imagen y el texto
                 const Text(
-                  'BeatzPro',
+                  'BeatzPro - Music Player',
                   style: TextStyle(
                     color: Colors.white,
                     fontSize: 24,

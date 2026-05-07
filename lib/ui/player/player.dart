@@ -30,6 +30,7 @@ class Player extends StatefulWidget {
 
 class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
   AnimationController? _controller;
+  Worker? _playbackStateWorker;
 
   @override
   void initState() {
@@ -37,13 +38,32 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
     _controller = AnimationController(
       duration: const Duration(seconds: 20), // Customize the duration as needed
       vsync: this,
-    )..repeat(); // This will repeat the animation infinitely
+    );
+    final playerController = Get.find<PlayerController>();
+    _syncPlaybackAnimations(playerController.buttonState.value);
+    _playbackStateWorker = ever<PlayButtonState>(
+      playerController.buttonState,
+      _syncPlaybackAnimations,
+    );
   }
 
   @override
   void dispose() {
+    _playbackStateWorker?.dispose();
     _controller?.dispose();
     super.dispose();
+  }
+
+  void _syncPlaybackAnimations(PlayButtonState state) {
+    final controller = _controller;
+    if (controller == null) return;
+    if (state == PlayButtonState.playing) {
+      if (!controller.isAnimating) {
+        controller.repeat();
+      }
+    } else {
+      controller.stop();
+    }
   }
 
   @override
@@ -239,7 +259,9 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                                                 .withLightness(0.4),
                                             minRadius:
                                                 playerArtImageSize / 2 + 10,
-                                            repeat: true,
+                                            repeat: playerController
+                                                    .buttonState.value ==
+                                                PlayButtonState.playing,
                                             ripplesCount: 6,
                                             child: AnimatedBuilder(
                                               animation: _controller!,
@@ -480,13 +502,11 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                   Expanded(child: Container()),
                   const SizedBox(height: 10),
                   Obx(() {
-                    final buttonState = playerController.buttonState.value;
-                    final isPlaying = buttonState == PlayButtonState.playing;
                     final showLyrics = playerController.showLyricsflag.value;
 
                     return Visibility(
-                      visible: isPlaying &&
-                          !showLyrics, // Visible solo cuando está reproduciendo y las letras no se muestran
+                      visible: playerController.currentSong.value != null &&
+                          !showLyrics,
                       child: _buildMusicVisualizer(colors, duration),
                     );
                   }),

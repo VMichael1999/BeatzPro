@@ -5,13 +5,14 @@ PODS:
     - FlutterMacOS
   - audio_session (0.0.1):
     - FlutterMacOS
+  - audiotags (1.4.1):
+    - FlutterMacOS
   - device_equalizer (0.0.1):
     - FlutterMacOS
   - FlutterMacOS (1.0.0)
-  - FMDB (2.7.5):
-    - FMDB/standard (= 2.7.5)
-  - FMDB/standard (2.7.5)
   - just_audio (0.0.1):
+    - FlutterMacOS
+  - just_waveform (0.0.1):
     - FlutterMacOS
   - path_provider_foundation (0.0.1):
     - Flutter
@@ -20,10 +21,10 @@ PODS:
     - FlutterMacOS
   - share_plus (0.0.1):
     - FlutterMacOS
-  - sqflite (0.0.2):
+  - sqflite (0.0.3):
+    - Flutter
     - FlutterMacOS
-    - FMDB (>= 2.7.5)
-  - system_tray (0.0.1):
+  - tray_manager (0.0.1):
     - FlutterMacOS
   - url_launcher_macos (0.0.1):
     - FlutterMacOS
@@ -34,20 +35,18 @@ DEPENDENCIES:
   - app_links (from `Flutter/ephemeral/.symlinks/plugins/app_links/macos`)
   - audio_service (from `Flutter/ephemeral/.symlinks/plugins/audio_service/macos`)
   - audio_session (from `Flutter/ephemeral/.symlinks/plugins/audio_session/macos`)
+  - audiotags (from `Flutter/ephemeral/.symlinks/plugins/audiotags/macos`)
   - device_equalizer (from `Flutter/ephemeral/.symlinks/plugins/device_equalizer/macos`)
   - FlutterMacOS (from `Flutter/ephemeral`)
   - just_audio (from `Flutter/ephemeral/.symlinks/plugins/just_audio/macos`)
+  - just_waveform (from `Flutter/ephemeral/.symlinks/plugins/just_waveform/macos`)
   - path_provider_foundation (from `Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin`)
   - screen_retriever (from `Flutter/ephemeral/.symlinks/plugins/screen_retriever/macos`)
   - share_plus (from `Flutter/ephemeral/.symlinks/plugins/share_plus/macos`)
-  - sqflite (from `Flutter/ephemeral/.symlinks/plugins/sqflite/macos`)
-  - system_tray (from `Flutter/ephemeral/.symlinks/plugins/system_tray/macos`)
+  - sqflite (from `Flutter/ephemeral/.symlinks/plugins/sqflite/darwin`)
+  - tray_manager (from `Flutter/ephemeral/.symlinks/plugins/tray_manager/macos`)
   - url_launcher_macos (from `Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos`)
   - window_manager (from `Flutter/ephemeral/.symlinks/plugins/window_manager/macos`)
-
-SPEC REPOS:
-  trunk:
-    - FMDB
 
 EXTERNAL SOURCES:
   app_links:
@@ -56,12 +55,16 @@ EXTERNAL SOURCES:
     :path: Flutter/ephemeral/.symlinks/plugins/audio_service/macos
   audio_session:
     :path: Flutter/ephemeral/.symlinks/plugins/audio_session/macos
+  audiotags:
+    :path: Flutter/ephemeral/.symlinks/plugins/audiotags/macos
   device_equalizer:
     :path: Flutter/ephemeral/.symlinks/plugins/device_equalizer/macos
   FlutterMacOS:
     :path: Flutter/ephemeral
   just_audio:
     :path: Flutter/ephemeral/.symlinks/plugins/just_audio/macos
+  just_waveform:
+    :path: Flutter/ephemeral/.symlinks/plugins/just_waveform/macos
   path_provider_foundation:
     :path: Flutter/ephemeral/.symlinks/plugins/path_provider_foundation/darwin
   screen_retriever:
@@ -69,30 +72,31 @@ EXTERNAL SOURCES:
   share_plus:
     :path: Flutter/ephemeral/.symlinks/plugins/share_plus/macos
   sqflite:
-    :path: Flutter/ephemeral/.symlinks/plugins/sqflite/macos
-  system_tray:
-    :path: Flutter/ephemeral/.symlinks/plugins/system_tray/macos
+    :path: Flutter/ephemeral/.symlinks/plugins/sqflite/darwin
+  tray_manager:
+    :path: Flutter/ephemeral/.symlinks/plugins/tray_manager/macos
   url_launcher_macos:
     :path: Flutter/ephemeral/.symlinks/plugins/url_launcher_macos/macos
   window_manager:
     :path: Flutter/ephemeral/.symlinks/plugins/window_manager/macos
 
 SPEC CHECKSUMS:
-  app_links: 4481ed4d71f384b0c3ae5016f4633aa73d32ff67
-  audio_service: b88ff778e0e3915efd4cd1a5ad6f0beef0c950a9
-  audio_session: dea1f41890dbf1718f04a56f1d6150fd50039b72
-  device_equalizer: 8360bc47146eaaa4f2a757306f5009b2dce67438
-  FlutterMacOS: 8f6f14fa908a6fb3fba0cd85dbd81ec4b251fb24
-  FMDB: 2ce00b547f966261cd18927a3ddb07cb6f3db82a
-  just_audio: 9b67ca7b97c61cfc9784ea23cd8cc55eb226d489
-  path_provider_foundation: 29f094ae23ebbca9d3d0cec13889cd9060c0e943
-  screen_retriever: 59634572a57080243dd1bf715e55b6c54f241a38
-  share_plus: 76dd39142738f7a68dd57b05093b5e8193f220f7
-  sqflite: a5789cceda41d54d23f31d6de539d65bb14100ea
-  system_tray: e53c972838c69589ff2e77d6d3abfd71332f9e5d
-  url_launcher_macos: d2691c7dd33ed713bf3544850a623080ec693d95
-  window_manager: 3a1844359a6295ab1e47659b1a777e36773cd6e8
+  app_links: 9028728e32c83a0831d9db8cf91c526d16cc5468
+  audio_service: 0d9e4e25347bb3efb768f3b9f005911a81e587a7
+  audio_session: 48ab6500f7a5e7c64363e206565a5dfe5a0c1441
+  audiotags: c4c70719682f2cc574e90223c94164ac000dfdc5
+  device_equalizer: 930377e2d9a13d93ba225b6958ba3f51b69a1e87
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  just_audio: eb8b016ac4493159ab24db4f7215e55303b39a84
+  just_waveform: f5d553ef036843e2c882f8d48d316aaa89d3763e
+  path_provider_foundation: 080d55be775b7414fd5a5ef3ac137b97b097e564
+  screen_retriever: 4f97c103641aab8ce183fa5af3b87029df167936
+  share_plus: 11c7b7fa7020465584eca3ff6392c5bc1e399d6e
+  sqflite: c35dad70033b8862124f8337cc994a809fcd9fa3
+  tray_manager: a104b5c81b578d83f3c3d0f40a997c8b10810166
+  url_launcher_macos: de10e46d8d8b9e3a7b8a133e8de92b104379f05e
+  window_manager: 1d01fa7ac65a6e6f83b965471b1a7fdd3f06166c
 
-PODFILE CHECKSUM: 236401fc2c932af29a9fcf0e97baeeb2d750d367
+PODFILE CHECKSUM: 469ab14a20b6a352652571cc8efd981d0f5a4bf8
 
-COCOAPODS: 1.14.3
+COCOAPODS: 1.16.2

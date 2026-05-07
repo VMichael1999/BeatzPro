@@ -1,4 +1,4 @@
-platform :osx, '10.14'
+platform :osx, '10.15'
 
 # CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
@@ -39,5 +39,20 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_macos_build_settings(target)
+    target.build_configurations.each do |config|
+      flags = config.build_settings['OTHER_LDFLAGS']
+      next if flags.nil?
+
+      flags = flags.split(' ') if flags.is_a?(String)
+      flags.delete('-l"macos"')
+      flags.delete('-lmacos')
+      config.build_settings['OTHER_LDFLAGS'] = flags
+    end
+  end
+
+  Dir.glob(File.join(__dir__, 'Pods', 'Target Support Files', 'audiotags', 'audiotags.*.xcconfig')).each do |path|
+    text = File.read(path)
+    text = text.gsub(' -l"macos"', '').gsub(' -lmacos', '')
+    File.write(path, text)
   end
 end

@@ -1,0 +1,52 @@
+Reglas de trabajo:
+
+- No crear ramas separadas. Trabajar siempre directamente en la rama principal.
+- Leer los archivos existentes antes de escribir en ellos.
+- No releer archivos que ya revisaste, salvo que los hayas modificado o exista una razón concreta.
+- Priorizar cambios mínimos y localizados. Evitar refactors amplios si no fueron pedidos.
+- Omitir archivos de más de 100 KB salvo que sean estrictamente necesarios.
+- No cargar archivos binarios, generados, minificados, lockfiles ni artefactos de build, salvo necesidad real.
+- No repetir contexto ya disponible. Reutilizar lo visto en la sesión.
+- No resumir ni reexplicar el historial salvo que se solicite.
+- Razonamiento exhaustivo, resultados concisos.
+- Responder con el menor número de palabras que mantenga precisión.
+- Preferir listas cortas, diffs y acciones concretas sobre explicaciones largas.
+- Si propones cambios de código, entregar primero el diff o el bloque exacto a modificar.
+- No imprimir código completo de archivos grandes si solo cambia una parte.
+- Antes de tocar varios archivos, justificar en una sola frase por qué cada archivo es necesario.
+- No hacer exploración amplia del repositorio si el problema ya está acotado.
+- Buscar primero por nombre, importación, referencia o símbolo antes de abrir archivos completos.
+- No abrir archivos relacionados “por si acaso”.
+- No adivinar APIs, versiones, flags, hashes SHA, nombres de paquetes, rutas ni contratos.
+- Verificar cualquier dato dudoso leyendo el código o la documentación antes de afirmarlo. Anthropic recomienda prompts específicos y contexto bien controlado para reducir costo y mejorar precisión. [oai_citation:0‡Claude API Docs](https://docs.anthropic.com/en/prompt-library/library?utm_source=chatgpt.com)
+- Si falta evidencia, decir “no verificado” en vez de inventar.
+- No asumir que una función existe solo porque sería razonable que existiera.
+- Si una dependencia o comando no está confirmado en el proyecto, comprobarlo antes de usarlo.
+- No usar frases introductorias aduladoras.
+- No usar palabras de cierre superfluas.
+- No usar emojis.
+- No usar guiones largos.
+- No repetir la petición del usuario.
+- No pedir confirmación innecesaria para tareas pequeñas o claramente delimitadas.
+- Si hay ambigüedad menor, hacer la suposición más conservadora y declararla en una línea.
+- Para tareas grandes, dividir internamente en pasos, pero mostrar solo el resultado necesario.
+- Mantener la salida corta por defecto: máximo 5 bullets salvo que se pida más.
+- No incluir contexto ornamental, historia, relleno ni tutoriales si no fueron solicitados.
+- Si la respuesta puede darse en una línea, darla en una línea.
+- Si una solución requiere varias opciones, listar solo las 2 o 3 más probables.
+- Preferir edición directa sobre reescritura total.
+- Conservar estilo, arquitectura y convenciones existentes del proyecto.
+- No renombrar símbolos, mover archivos ni reformatear masivamente sin necesidad.
+- No cambiar comportamiento no relacionado con la tarea.
+- Si encuentras un problema adicional no solicitado, mencionarlo en una sola línea sin desviar la tarea principal.
+- Minimizar el uso de herramientas, lecturas y salidas extensas, porque el costo aumenta con el tamaño del contexto y de la respuesta. Anthropic lo documenta explícitamente. [oai_citation:1‡Claude API Docs](https://docs.anthropic.com/en/docs/claude-code/costs?utm_source=chatgpt.com)
+- Si usas modo de razonamiento extendido, mantener un presupuesto conservador, ya que más thinking tokens pueden aumentar el costo. [oai_citation:2‡Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/extended-thinking?utm_source=chatgpt.com)
+- Si trabajas con prompts repetitivos o contexto base estable, reutilizar prefijos/cache cuando esté disponible para reducir costo. [oai_citation:3‡Claude API Docs](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching?utm_source=chatgpt.com)
+- Si la tarea no requiere el modelo más capaz, preferir uno más barato y rápido. Anthropic recomienda ajustar el modelo según complejidad. [oai_citation:4‡Claude API Docs](https://docs.anthropic.com/en/docs/claude-code/costs?utm_source=chatgpt.com)
+
+Formato de respuesta:
+
+- Primero: resultado o acción principal.
+- Después: diff, parche o pasos mínimos.
+- Finalmente: riesgos o supuestos, en máximo 3 bullets.
+- No agregar secciones si no aportan valor.

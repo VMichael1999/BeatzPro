@@ -14,6 +14,10 @@ class CustomProgressBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final safeMaxValue = maxValue.isFinite && maxValue > 0 ? maxValue : 0.0;
+    final safeCurrentValue =
+        currentSliderValue.clamp(0.0, safeMaxValue).toDouble();
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -23,24 +27,25 @@ class CustomProgressBar extends StatelessWidget {
                 .primaryColor
                 .withLightness(0.5), // Color de la barra de progreso
             inactiveTrackColor: Theme.of(context)
-                .primaryColor.withLightness(0.3), // Color de la barra sin progreso
+                .primaryColor
+                .withLightness(0.3), // Color de la barra sin progreso
             thumbColor: Theme.of(context)
                 .primaryColor
                 .withLightness(0.7), // Color del "thumb"
             thumbShape: CustomSliderThumbRect(
               thumbHeight: 40.0,
               thumbWidth: 10.0,
-              innerColor:  Theme.of(context)
-                .primaryColor, // Color adicional en el centro del thumb
+              innerColor: Theme.of(context)
+                  .primaryColor, // Color adicional en el centro del thumb
               innerWidth: 4.0, // Ancho del color interno
               innerHeight: 35.0, // Altura del color interno
             ),
             trackHeight: 20.0, // Altura de la barra de progreso
           ),
           child: Slider(
-            value: currentSliderValue,
+            value: safeCurrentValue,
             min: 0.0,
-            max: maxValue,
+            max: safeMaxValue,
             onChanged: onChanged,
           ),
         ),
@@ -50,11 +55,11 @@ class CustomProgressBar extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                _formatDuration(currentSliderValue),
+                _formatDuration(safeCurrentValue),
                 style: const TextStyle(color: Colors.white),
               ),
               Text(
-                _formatDuration(maxValue),
+                _formatDuration(safeMaxValue),
                 style: const TextStyle(color: Colors.white),
               ),
             ],
@@ -65,8 +70,9 @@ class CustomProgressBar extends StatelessWidget {
   }
 
   String _formatDuration(double value) {
-    final minutes = value.floor();
-    final seconds = ((value - minutes) * 60).round();
+    final totalSeconds = (value * 60).round();
+    final minutes = totalSeconds ~/ 60;
+    final seconds = totalSeconds % 60;
     return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
   }
 }
@@ -134,7 +140,8 @@ class CustomSliderThumbRect extends SliderComponentShape {
     );
 
     context.canvas.drawRRect(
-      RRect.fromRectAndRadius(innerRect, const Radius.circular(2.0)), // Radio de los bordes internos
+      RRect.fromRectAndRadius(innerRect,
+          const Radius.circular(2.0)), // Radio de los bordes internos
       innerPaint,
     );
   }

@@ -152,10 +152,11 @@ class ListWidget extends StatelessWidget {
                   if (isPlaylist)
                     Obx(() => playerController.currentSong.value?.id ==
                             items[index].id
-                        ? const MiniMusicVisualizer(
+                        ? MiniMusicVisualizer(
                             color: Colors.red,
                             radius: 20.0, // Radius of the visualizer circle
-                            animate: true, // Whether to animate the visualizer
+                            animate: playerController.buttonState.value ==
+                                PlayButtonState.playing,
                           )
                         : const SizedBox.shrink()),
                   Text(
