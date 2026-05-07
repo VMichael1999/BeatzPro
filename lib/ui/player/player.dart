@@ -232,10 +232,12 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                   Obx(
                     () => playerController.currentSong.value != null &&
                             playerController.showLyricsflag.isFalse
-                        ? Padding(
-                            padding: const EdgeInsets.only(bottom: 12.0),
-                            child: _mediaModeSegment(playerController),
-                          )
+                        ? const SizedBox.shrink()
+                        // CupertinoSlidingSegmentedControl hidden temporarily.
+                        // ? Padding(
+                        //     padding: const EdgeInsets.only(bottom: 12.0),
+                        //     child: _mediaModeSegment(playerController),
+                        //   )
                         : const SizedBox.shrink(),
                   ),
                   Obx(
@@ -673,6 +675,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
     );
   }
 
+  // ignore: unused_element
   Widget _mediaModeSegment(PlayerController playerController) {
     final isCompactWidth = MediaQuery.of(context).size.width < 370;
     final horizontalPadding = isCompactWidth ? 12.0 : 18.0;

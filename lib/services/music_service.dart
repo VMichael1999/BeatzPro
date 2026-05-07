@@ -549,42 +549,16 @@ class MusicServices extends getx.GetxService {
 
   Future<String?> getVideoStreamUrl(String songId, {int attempt = 1}) async {
     try {
-      if (songId.substring(0, 4) == "MPED") {
+      if (songId.length >= 4 && songId.substring(0, 4) == "MPED") {
         songId = songId.substring(4);
       }
-      final playerResponse = await dio.post(
-        'https://www.youtube.com/youtubei/v1/player?prettyPrint=false',
-        data: {
-          'videoId': songId,
-          'contentCheckOk': true,
-          'racyCheckOk': true,
-          'context': {
-            'client': {
-              'clientName': 'WEB',
-              'clientVersion': '2.20240726.00.00',
-              'userAgent':
-                  'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15,gzip(gfe)',
-              'hl': _context['context']['client']['hl'] ?? 'en',
-              'timeZone': 'UTC',
-              'utcOffsetMinutes': 0,
-            },
-          },
-        },
-        options: Options(headers: {
-          'content-type': 'application/json',
-          'origin': 'https://www.youtube.com',
-          'referer': 'https://www.youtube.com/watch?v=$songId',
-          'user-agent':
-              'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.5 Safari/605.1.15',
-        }),
+      final manifest = await _yt.videos.streamsClient.getManifest(
+        songId,
+        ytClients: [
+          YoutubeApiClient.androidVr,
+          YoutubeApiClient.tv,
+        ],
       );
-      final streamingData = playerResponse.data?['streamingData'];
-      final hlsManifestUrl = streamingData?['hlsManifestUrl'];
-      if (hlsManifestUrl is String && hlsManifestUrl.isNotEmpty) {
-        return hlsManifestUrl;
-      }
-
-      final manifest = await _yt.videos.streamsClient.getManifest(songId);
       if (manifest.muxed.isNotEmpty) {
         return manifest.muxed.sortByVideoQuality().first.url.toString();
       }
