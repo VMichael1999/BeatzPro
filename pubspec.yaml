@@ -36,6 +36,7 @@ dependencies:
   #cupertino_icons: ^1.0.2
   just_audio: ^0.9.38
   audio_video_progress_bar: ^2.0.3
+  video_player: ^2.9.5
   get: ^4.6.6
   #http: ^0.13.5
   dio: ^5.3.3

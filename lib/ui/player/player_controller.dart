@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:flutter/material.dart';
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter_keyboard_visibility/flutter_keyboard_visibility.dart';
+import 'package:video_player/video_player.dart';
 
 import '../../services/windows_audio_service.dart';
 import '../../utils/helper.dart';
@@ -16,6 +17,8 @@ import '../screens/PlaylistNAlbum/playlistnalbum_screen_controller.dart';
 import '../widgets/sliding_up_panel.dart';
 import '/models/durationstate.dart';
 import '/services/music_service.dart';
+
+enum PlayerMediaMode { music, video }
 
 class PlayerController extends GetxController {
   final _audioHandler = Get.find<AudioHandler>();
@@ -38,6 +41,11 @@ class PlayerController extends GetxController {
   final isSleepTimerActive = false.obs;
   final isSleepEndOfSongActive = false.obs;
   final volume = 100.obs;
+  final mediaMode = PlayerMediaMode.music.obs;
+  final videoController = Rxn<VideoPlayerController>();
+  final isVideoLoading = false.obs;
+  final videoError = RxnString();
+  String? _videoSongId;
 
   final progressBarStatus = ProgressBarState(
           buffered: Duration.zero, current: Duration.zero, total: Duration.zero)
@@ -70,6 +78,13 @@ class PlayerController extends GetxController {
   onInit() {
     _init();
     super.onInit();
+  }
+
+  @override
+  void onClose() {
+    keyboardSubscription.cancel();
+    _disposeVideoController();
+    super.onClose();
   }
 
   @override
@@ -126,6 +141,10 @@ class PlayerController extends GetxController {
 
   void _listenForChangesInPlayerState() {
     _audioHandler.playbackState.listen((playerState) {
+      if (mediaMode.value == PlayerMediaMode.video &&
+          videoController.value != null) {
+        return;
+      }
       final isPlaying = playerState.playing;
       final processingState = playerState.processingState;
       if (processingState == AudioProcessingState.loading) {
@@ -144,6 +163,7 @@ class PlayerController extends GetxController {
 
   void _listenForChangesInPosition() {
     AudioService.position.listen((position) {
+      if (mediaMode.value == PlayerMediaMode.video) return;
       final oldState = progressBarStatus.value;
       if (isSleepEndOfSongActive.isTrue) {
         timerDurationLeft.value = oldState.total.inSeconds - position.inSeconds;
@@ -162,6 +182,7 @@ class PlayerController extends GetxController {
 
   void _listenForChangesInBufferedPosition() {
     _audioHandler.playbackState.listen((playbackState) {
+      if (mediaMode.value == PlayerMediaMode.video) return;
       final oldState = progressBarStatus.value;
       if (playbackState.bufferedPosition.inSeconds /
               progressBarStatus.value.total.inSeconds ==
@@ -193,6 +214,12 @@ class PlayerController extends GetxController {
         _newSongFlag = true;
         isCurrentSongBuffered.value = false;
         currentSong.value = mediaItem;
+        if (_videoSongId != mediaItem.id) {
+          await _disposeVideoController();
+          if (mediaMode.value == PlayerMediaMode.video) {
+            mediaMode.value = PlayerMediaMode.music;
+          }
+        }
         currentSongIndex.value = currentQueue
             .indexWhere((element) => element.id == currentSong.value!.id);
         await _checkFav();
@@ -403,10 +430,20 @@ class PlayerController extends GetxController {
   }
 
   void play() {
+    if (mediaMode.value == PlayerMediaMode.video &&
+        videoController.value != null) {
+      videoController.value!.play();
+      return;
+    }
     _audioHandler.play();
   }
 
   void pause() {
+    if (mediaMode.value == PlayerMediaMode.video &&
+        videoController.value != null) {
+      videoController.value!.pause();
+      return;
+    }
     _audioHandler.pause();
   }
 
@@ -423,7 +460,99 @@ class PlayerController extends GetxController {
   }
 
   void seek(Duration position) {
+    if (mediaMode.value == PlayerMediaMode.video &&
+        videoController.value != null) {
+      videoController.value!.seekTo(position);
+      return;
+    }
     _audioHandler.seek(position);
+  }
+
+  Future<void> setMediaMode(PlayerMediaMode mode) async {
+    if (mediaMode.value == mode) return;
+    if (mode == PlayerMediaMode.music) {
+      final videoPosition = videoController.value?.value.position;
+      await _disposeVideoController();
+      mediaMode.value = PlayerMediaMode.music;
+      if (videoPosition != null && videoPosition > Duration.zero) {
+        seek(videoPosition);
+      }
+      await _audioHandler.play();
+      return;
+    }
+
+    final song = currentSong.value;
+    if (song == null) return;
+    mediaMode.value = PlayerMediaMode.video;
+    await _audioHandler.pause();
+    await _loadVideo(song);
+  }
+
+  Future<void> _loadVideo(MediaItem song) async {
+    if (_videoSongId == song.id && videoController.value != null) {
+      await videoController.value!.play();
+      return;
+    }
+
+    isVideoLoading.value = true;
+    videoError.value = null;
+    await _disposeVideoController();
+    try {
+      final url = await _musicServices.getVideoStreamUrl(song.id);
+      if (url == null) {
+        videoError.value = "Video no disponible";
+        return;
+      }
+
+      final controller = VideoPlayerController.networkUrl(
+        Uri.parse(url),
+        formatHint: url.contains('.m3u8') ? VideoFormat.hls : null,
+      );
+      videoController.value = controller;
+      _videoSongId = song.id;
+      controller.addListener(_syncVideoState);
+      await controller.initialize();
+      videoController.refresh();
+      final audioPosition = progressBarStatus.value.current;
+      if (audioPosition > Duration.zero &&
+          audioPosition < controller.value.duration) {
+        await controller.seekTo(audioPosition);
+      }
+      await controller.play();
+      _syncVideoState();
+    } catch (e) {
+      videoError.value = "Video no disponible";
+      printERROR("Video player error $e");
+      await _disposeVideoController();
+    } finally {
+      isVideoLoading.value = false;
+    }
+  }
+
+  void _syncVideoState() {
+    final controller = videoController.value;
+    if (controller == null || mediaMode.value != PlayerMediaMode.video) return;
+    final value = controller.value;
+    progressBarStatus.update((val) {
+      val!.current = value.position;
+      val.buffered =
+          value.buffered.isNotEmpty ? value.buffered.last.end : value.position;
+      val.total = value.duration;
+    });
+    if (value.isPlaying) {
+      buttonState.value = PlayButtonState.playing;
+    } else {
+      buttonState.value = PlayButtonState.paused;
+    }
+  }
+
+  Future<void> _disposeVideoController() async {
+    final controller = videoController.value;
+    if (controller == null) return;
+    controller.removeListener(_syncVideoState);
+    videoController.value = null;
+    _videoSongId = null;
+    await controller.dispose();
   }
 
   void seekByIndex(int index) {

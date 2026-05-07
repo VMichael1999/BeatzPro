@@ -1,5 +1,7 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter_lyric/lyrics_reader.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -7,6 +9,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:newton_particles/newton_particles.dart';
 import 'package:toggle_switch/toggle_switch.dart';
 import 'package:simple_ripple_animation/simple_ripple_animation.dart';
+import 'package:video_player/video_player.dart';
 import '../widgets/buttonplay_animation.dart';
 import '../widgets/custom_lyricui.dart';
 import '../widgets/custom_progress.dart';
@@ -25,10 +28,10 @@ class Player extends StatefulWidget {
   const Player({super.key});
 
   @override
-  _PlayerState createState() => _PlayerState();
+  PlayerState createState() => PlayerState();
 }
 
-class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
+class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
   AnimationController? _controller;
   Worker? _playbackStateWorker;
 
@@ -70,10 +73,31 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
   Widget build(BuildContext context) {
     printINFO("player");
     final size = MediaQuery.of(context).size;
+    final safeArea = MediaQuery.of(context).padding;
     final PlayerController playerController = Get.find<PlayerController>();
     final ThemeController themeController = Get.find<ThemeController>();
-    double playerArtImageSize = size.width - ((size.height < 750) ? 90 : 60);
-    playerArtImageSize = playerArtImageSize > 350 ? 350 : playerArtImageSize;
+    final isTinyHeight = size.height < 650;
+    final isCompactHeight = size.height < 750;
+    final horizontalPadding = size.width < 360 ? 18.0 : 25.0;
+    final availableWidth = size.width - (horizontalPadding * 2);
+    final maxArtworkByHeight = size.height *
+        (isTinyHeight
+            ? 0.26
+            : isCompactHeight
+                ? 0.30
+                : 0.34);
+    final playerArtImageSize = math.max(
+      170.0,
+      math.min(320.0, math.min(availableWidth, maxArtworkByHeight)),
+    );
+    final collapsedPanelHeight = 65.0 + safeArea.bottom;
+    final controlsBottomGap =
+        collapsedPanelHeight + (isTinyHeight ? 10.0 : 14.0);
+    final playButtonRadius = isTinyHeight
+        ? 28.0
+        : isCompactHeight
+            ? 31.0
+            : 34.0;
     final List<Color> colors = [
       Colors.black,
       Theme.of(context).primaryColor.withLightness(0.4),
@@ -182,21 +206,37 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
               child: Container(
-                color: Theme.of(context).primaryColor.withOpacity(0.90),
+                color: Theme.of(context).primaryColor.withValues(alpha: 0.90),
               ),
             ),
             Padding(
-              padding: const EdgeInsets.only(left: 25, right: 25),
+              padding: EdgeInsets.only(
+                left: horizontalPadding,
+                right: horizontalPadding,
+              ),
               child: Column(
                 children: [
                   Obx(
-                    () => playerController.showLyricsflag.value
-                        ? SizedBox(
-                            height: size.height < 750 ? 30 : 70,
+                    () {
+                      final topGap = safeArea.top +
+                          (playerController.showLyricsflag.value
+                              ? (isCompactHeight ? 8.0 : 36.0)
+                              : (isTinyHeight
+                                  ? 6.0
+                                  : isCompactHeight
+                                      ? 18.0
+                                      : 42.0));
+                      return SizedBox(height: topGap);
+                    },
+                  ),
+                  Obx(
+                    () => playerController.currentSong.value != null &&
+                            playerController.showLyricsflag.isFalse
+                        ? Padding(
+                            padding: const EdgeInsets.only(bottom: 12.0),
+                            child: _mediaModeSegment(playerController),
                           )
-                        : SizedBox(
-                            height: size.height < 750 ? 80 : 120,
-                          ),
+                        : const SizedBox.shrink(),
                   ),
                   Obx(
                     () => playerController.showLyricsflag.value
@@ -253,81 +293,107 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                                                   .showLyricsflag.isTrue
                                               ? 0.0
                                               : 1.0,
-                                          child: RippleAnimation(
-                                            color: Theme.of(context)
-                                                .primaryColor
-                                                .withLightness(0.4),
-                                            minRadius:
-                                                playerArtImageSize / 2 + 10,
-                                            repeat: playerController
-                                                    .buttonState.value ==
-                                                PlayButtonState.playing,
-                                            ripplesCount: 6,
-                                            child: AnimatedBuilder(
-                                              animation: _controller!,
-                                              builder: (context, child) {
-                                                return Transform.rotate(
-                                                  angle: _controller!.value *
-                                                      2 *
-                                                      3.1416,
-                                                  child: child,
-                                                );
-                                              },
-                                              child: InkWell(
-                                                key: ValueKey(playerController
-                                                    .currentSong.value),
-                                                onLongPress: () {
-                                                  showModalBottomSheet(
-                                                    constraints:
-                                                        const BoxConstraints(
-                                                            maxWidth: 500),
-                                                    shape:
-                                                        const RoundedRectangleBorder(
-                                                      borderRadius:
-                                                          BorderRadius.vertical(
-                                                        top: Radius.circular(
-                                                            10.0),
+                                          child: playerController
+                                                      .mediaMode.value ==
+                                                  PlayerMediaMode.video
+                                              ? _buildVideoSurface(
+                                                  playerController,
+                                                  playerArtImageSize,
+                                                )
+                                              : RippleAnimation(
+                                                  color: Theme.of(context)
+                                                      .primaryColor
+                                                      .withLightness(0.4),
+                                                  minRadius:
+                                                      playerArtImageSize / 2 +
+                                                          10,
+                                                  repeat: playerController
+                                                          .buttonState.value ==
+                                                      PlayButtonState.playing,
+                                                  ripplesCount: 6,
+                                                  child: AnimatedBuilder(
+                                                    animation: _controller!,
+                                                    builder: (context, child) {
+                                                      return Transform.rotate(
+                                                        angle:
+                                                            _controller!.value *
+                                                                2 *
+                                                                3.1416,
+                                                        child: child,
+                                                      );
+                                                    },
+                                                    child: InkWell(
+                                                      key: ValueKey(
+                                                          playerController
+                                                              .currentSong
+                                                              .value),
+                                                      onLongPress: () {
+                                                        showModalBottomSheet(
+                                                          constraints:
+                                                              const BoxConstraints(
+                                                                  maxWidth:
+                                                                      500),
+                                                          shape:
+                                                              const RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius
+                                                                    .vertical(
+                                                              top: Radius
+                                                                  .circular(
+                                                                      10.0),
+                                                            ),
+                                                          ),
+                                                          isScrollControlled:
+                                                              true,
+                                                          context:
+                                                              playerController
+                                                                  .homeScaffoldkey
+                                                                  .currentState!
+                                                                  .context,
+                                                          barrierColor: Colors
+                                                              .transparent
+                                                              .withAlpha(100),
+                                                          builder: (context) =>
+                                                              SongInfoBottomSheet(
+                                                            playerController
+                                                                .currentSong
+                                                                .value!,
+                                                            calledFromPlayer:
+                                                                true,
+                                                          ),
+                                                        ).whenComplete(() =>
+                                                            Get.delete<
+                                                                SongInfoController>());
+                                                      },
+                                                      onTap: () {
+                                                        playerController
+                                                            .showLyrics();
+                                                      },
+                                                      child: Container(
+                                                        height:
+                                                            playerArtImageSize,
+                                                        width:
+                                                            playerArtImageSize,
+                                                        clipBehavior:
+                                                            Clip.antiAlias,
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          shape:
+                                                              BoxShape.circle,
+                                                        ),
+                                                        child: ImageWidget(
+                                                          size:
+                                                              playerArtImageSize,
+                                                          song: playerController
+                                                              .currentSong
+                                                              .value!,
+                                                          isPlayerArtImage:
+                                                              true,
+                                                        ),
                                                       ),
                                                     ),
-                                                    isScrollControlled: true,
-                                                    context: playerController
-                                                        .homeScaffoldkey
-                                                        .currentState!
-                                                        .context,
-                                                    barrierColor: Colors
-                                                        .transparent
-                                                        .withAlpha(100),
-                                                    builder: (context) =>
-                                                        SongInfoBottomSheet(
-                                                      playerController
-                                                          .currentSong.value!,
-                                                      calledFromPlayer: true,
-                                                    ),
-                                                  ).whenComplete(() =>
-                                                      Get.delete<
-                                                          SongInfoController>());
-                                                },
-                                                onTap: () {
-                                                  playerController.showLyrics();
-                                                },
-                                                child: Container(
-                                                  height: playerArtImageSize,
-                                                  width: playerArtImageSize,
-                                                  clipBehavior: Clip.antiAlias,
-                                                  decoration:
-                                                      const BoxDecoration(
-                                                    shape: BoxShape.circle,
-                                                  ),
-                                                  child: ImageWidget(
-                                                    size: playerArtImageSize,
-                                                    song: playerController
-                                                        .currentSong.value!,
-                                                    isPlayerArtImage: true,
                                                   ),
                                                 ),
-                                              ),
-                                            ),
-                                          ),
                                         )),
                                     Obx(
                                       () =>
@@ -371,7 +437,8 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                                                         decoration:
                                                             BoxDecoration(
                                                           color: Colors.black
-                                                              .withOpacity(0.5),
+                                                              .withValues(
+                                                                  alpha: 0.5),
                                                           borderRadius:
                                                               BorderRadius
                                                                   .circular(15),
@@ -459,8 +526,8 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                                                                       Theme.of(
                                                                               context)
                                                                           .primaryColor
-                                                                          .withOpacity(
-                                                                              0.90),
+                                                                          .withValues(
+                                                                              alpha: 0.90),
                                                                       Colors
                                                                           .transparent,
                                                                       Colors
@@ -470,8 +537,8 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                                                                       Theme.of(
                                                                               context)
                                                                           .primaryColor
-                                                                          .withOpacity(
-                                                                              0.90),
+                                                                          .withValues(
+                                                                              alpha: 0.90),
                                                                     ],
                                                                     stops: const [
                                                                       0,
@@ -499,18 +566,19 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                           )
                         : Container(),
                   ),
-                  Expanded(child: Container()),
-                  const SizedBox(height: 10),
+                  SizedBox(height: isTinyHeight ? 10 : 16),
+                  SizedBox(height: isTinyHeight ? 6 : 10),
                   Obx(() {
                     final showLyrics = playerController.showLyricsflag.value;
 
                     return Visibility(
-                      visible: playerController.currentSong.value != null &&
+                      visible: _shouldShowVisualizer() &&
+                          playerController.currentSong.value != null &&
                           !showLyrics,
                       child: _buildMusicVisualizer(colors, duration),
                     );
                   }),
-                  const SizedBox(height: 10),
+                  SizedBox(height: isTinyHeight ? 6 : 10),
                   Obx(() {
                     return MarqueeWidget(
                       child: Text(
@@ -522,7 +590,7 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                       ),
                     );
                   }),
-                  const SizedBox(height: 10),
+                  SizedBox(height: isTinyHeight ? 6 : 10),
                   GetX<PlayerController>(builder: (controller) {
                     return MarqueeWidget(
                       child: Text(
@@ -535,7 +603,7 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                       ),
                     );
                   }),
-                  const SizedBox(height: 20),
+                  SizedBox(height: isTinyHeight ? 10 : 20),
                   GetX<PlayerController>(builder: (controller) {
                     return CustomProgressBar(
                       // Aquí se usa la barra de progreso personalizada
@@ -553,41 +621,48 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                       },
                     );
                   }),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      IconButton(
-                        onPressed: playerController.toggleFavourite,
-                        icon: Obx(() => Icon(
-                              playerController.isCurrentSongFav.isFalse
-                                  ? Icons.favorite_border_rounded
-                                  : Icons.favorite_rounded,
-                              color: Theme.of(context)
-                                  .primaryColor
-                                  .withLightness(0.5),
-                            )),
-                      ),
-                      _previousButton(playerController, context),
-                      CircleAvatar(radius: 35, child: _playButton()),
-                      _nextButton(playerController, context),
-                      Obx(() {
-                        return IconButton(
-                          onPressed: playerController.toggleLoopMode,
-                          icon: Icon(
-                            Icons.all_inclusive,
-                            color: playerController.isLoopModeEnabled.value
-                                ? Theme.of(context)
+                  if (_shouldShowPlayerControls())
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        IconButton(
+                          onPressed: playerController.toggleFavourite,
+                          icon: Obx(() => Icon(
+                                playerController.isCurrentSongFav.isFalse
+                                    ? Icons.favorite_border_rounded
+                                    : Icons.favorite_rounded,
+                                color: Theme.of(context)
                                     .primaryColor
-                                    .withLightness(0.5)
-                                : Theme.of(context).textTheme.titleLarge!.color,
-                          ),
-                        );
-                      }),
-                    ],
-                  ),
+                                    .withLightness(0.5),
+                              )),
+                        ),
+                        _previousButton(playerController, context),
+                        CircleAvatar(
+                          radius: playButtonRadius,
+                          child: _playButton(),
+                        ),
+                        _nextButton(playerController, context),
+                        Obx(() {
+                          return IconButton(
+                            onPressed: playerController.toggleLoopMode,
+                            icon: Icon(
+                              Icons.all_inclusive,
+                              color: playerController.isLoopModeEnabled.value
+                                  ? Theme.of(context)
+                                      .primaryColor
+                                      .withLightness(0.5)
+                                  : Theme.of(context)
+                                      .textTheme
+                                      .titleLarge!
+                                      .color,
+                            ),
+                          );
+                        }),
+                      ],
+                    ),
                   SizedBox(
-                    height: 90 + Get.mediaQuery.padding.bottom,
+                    height: controlsBottomGap,
                   ),
                 ],
               ),
@@ -595,6 +670,108 @@ class _PlayerState extends State<Player> with SingleTickerProviderStateMixin {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _mediaModeSegment(PlayerController playerController) {
+    final isCompactWidth = MediaQuery.of(context).size.width < 370;
+    final horizontalPadding = isCompactWidth ? 12.0 : 18.0;
+    return CupertinoSlidingSegmentedControl<PlayerMediaMode>(
+      groupValue: playerController.mediaMode.value,
+      backgroundColor: Colors.black.withValues(alpha: 0.45),
+      thumbColor: Theme.of(context).primaryColor.withLightness(0.45),
+      padding: const EdgeInsets.all(4),
+      children: {
+        PlayerMediaMode.music: Padding(
+          padding:
+              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+          child: const Text(
+            "Canción",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+        ),
+        PlayerMediaMode.video: Padding(
+          padding:
+              EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+          child: const Text(
+            "Video",
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700),
+          ),
+        ),
+      },
+      onValueChanged: (value) {
+        if (value != null) {
+          playerController.setMediaMode(value);
+        }
+      },
+    );
+  }
+
+  bool _shouldShowPlayerControls() {
+    return true;
+  }
+
+  bool _shouldShowVisualizer() {
+    return false;
+  }
+
+  Widget _buildVideoSurface(
+    PlayerController playerController,
+    double playerArtImageSize,
+  ) {
+    return Obx(() {
+      final controller = playerController.videoController.value;
+      final error = playerController.videoError.value;
+
+      if (playerController.isVideoLoading.isTrue) {
+        return _videoFrame(
+          playerArtImageSize,
+          const Center(child: LoadingIndicator()),
+        );
+      }
+
+      if (error != null) {
+        return _videoFrame(
+          playerArtImageSize,
+          Center(
+            child: Text(
+              error,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ),
+        );
+      }
+
+      if (controller == null || !controller.value.isInitialized) {
+        return _videoFrame(
+          playerArtImageSize,
+          const Center(child: Icon(Icons.play_circle_outline, size: 54)),
+        );
+      }
+
+      return _videoFrame(
+        playerArtImageSize,
+        Center(
+          child: AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: VideoPlayer(controller),
+          ),
+        ),
+      );
+    });
+  }
+
+  Widget _videoFrame(double size, Widget child) {
+    return Container(
+      height: size,
+      width: size,
+      clipBehavior: Clip.antiAlias,
+      decoration: BoxDecoration(
+        color: Colors.black,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: child,
     );
   }
 
