@@ -19,11 +19,13 @@ class MediaItemBuilder {
       }
     }
 
+    final durationSeconds = _durationSecondsFrom(json);
+
     return MediaItem(
         id: json["videoId"],
         title: json["title"],
-        duration: json['duration'] != null
-            ? Duration(seconds: json['duration'])
+        duration: durationSeconds != null
+            ? Duration(seconds: durationSeconds)
             : toDuration(json['length']),
         album: album != null ? album['name'] : null,
         artist: artistName == ""
@@ -40,6 +42,14 @@ class MediaItemBuilder {
           'category': json['category'],
           'videoType': json['videoType'],
         });
+  }
+
+  static int? _durationSecondsFrom(dynamic json) {
+    final value = json['duration_seconds'] ?? json['duration'];
+    if (value is int) return value;
+    if (value is num) return value.round();
+    if (value is String) return int.tryParse(value);
+    return null;
   }
 
   static Duration? toDuration(String? time) {
@@ -68,6 +78,7 @@ class MediaItemBuilder {
         'artists': mediaItem.extras!['artists'],
         'length': mediaItem.extras!['length'],
         'duration': mediaItem.duration?.inSeconds,
+        'duration_seconds': mediaItem.duration?.inSeconds,
         'date': mediaItem.extras!['date'],
         'resultType': mediaItem.extras?['resultType'],
         'category': mediaItem.extras?['category'],

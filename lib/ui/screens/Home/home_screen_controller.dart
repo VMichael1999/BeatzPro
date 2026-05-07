@@ -42,8 +42,10 @@ class HomeScreenController extends GetxController {
       final loaded = await loadContentFromDb();
 
       if (loaded) {
-        final currTimeSecsDiff = DateTime.now().millisecondsSinceEpoch -
-            box.get("homeScreenDataTime");
+        final lastHomeUpdate = box.get("homeScreenDataTime") as int?;
+        final currTimeSecsDiff = lastHomeUpdate == null
+            ? 3600 * 8 * 1000 + 1
+            : DateTime.now().millisecondsSinceEpoch - lastHomeUpdate;
         if (currTimeSecsDiff / 1000 > 3600 * 8) {
           loadContentFromNetwork(silent: true);
         }
@@ -57,14 +59,25 @@ class HomeScreenController extends GetxController {
 
   Future<bool> loadContentFromDb() async {
     final homeScreenData = await Hive.openBox("homeScreenData");
-    if (homeScreenData.keys.isNotEmpty) {
-      final String quickPicksType = homeScreenData.get("quickPicksType");
-      final List quickPicksData = homeScreenData.get("quickPicks");
+    if (homeScreenData.keys.isEmpty) {
+      return false;
+    }
+
+    try {
+      final String quickPicksType =
+          homeScreenData.get("quickPicksType") ?? "Quick picks";
+      final List quickPicksData = homeScreenData.get("quickPicks") ?? [];
       final List middleContentData = homeScreenData.get("middleContent") ?? [];
       final List fixedContentData = homeScreenData.get("fixedContent") ?? [];
-      quickPicks.value = QuickPicks(
-          quickPicksData.map((e) => MediaItemBuilder.fromJson(e)).toList(),
-          title: quickPicksType);
+      final cachedQuickPicks =
+          quickPicksData.map((e) => MediaItemBuilder.fromJson(e)).toList();
+
+      if (cachedQuickPicks.isEmpty) {
+        printINFO("Ignored empty home screen cache");
+        return false;
+      }
+
+      quickPicks.value = QuickPicks(cachedQuickPicks, title: quickPicksType);
       middleContent.value = middleContentData
           .map((e) => e["type"] == "Album Content"
               ? AlbumContent.fromJson(e)
@@ -78,7 +91,8 @@ class HomeScreenController extends GetxController {
       isContentFetched.value = true;
       printINFO("Loaded from offline db");
       return true;
-    } else {
+    } catch (error) {
+      printERROR("Home cache ignored due to invalid data: $error");
       return false;
     }
   }
@@ -93,19 +107,20 @@ class HomeScreenController extends GetxController {
       final homeContentListMap = await _musicServices.getHome(
           limit:
               Get.find<SettingsScreenController>().noOfHomeScreenContent.value);
+      quickPicks.value = QuickPicks([]);
       if (contentType == "TR") {
         final index = homeContentListMap
             .indexWhere((element) => element['title'] == "Trending");
         if (index != -1 && index != 0) {
-          quickPicks.value = QuickPicks(
-              List<MediaItem>.from(homeContentListMap[index]["contents"]),
-              title: "Trending");
+          final con = homeContentListMap.removeAt(index);
+          quickPicks.value = QuickPicks(_mediaItemsFrom(con["contents"]),
+              title: con["title"] ?? "Trending");
         } else if (index == -1) {
           List charts = await _musicServices.getCharts();
           final con =
               charts.length == 4 ? charts.removeAt(3) : charts.removeAt(2);
-          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]),
-              title: con['title']);
+          quickPicks.value =
+              QuickPicks(_mediaItemsFrom(con["contents"]), title: con['title']);
           middleContentTemp.addAll(charts);
         }
       } else if (contentType == "TMV") {
@@ -113,12 +128,11 @@ class HomeScreenController extends GetxController {
             .indexWhere((element) => element['title'] == "Top music videos");
         if (index != -1 && index != 0) {
           final con = homeContentListMap.removeAt(index);
-          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]),
-              title: con["title"]);
+          quickPicks.value =
+              QuickPicks(_mediaItemsFrom(con["contents"]), title: con["title"]);
         } else if (index == -1) {
           List charts = await _musicServices.getCharts();
-          quickPicks.value = QuickPicks(
-              List<MediaItem>.from(charts[0]["contents"]),
+          quickPicks.value = QuickPicks(_mediaItemsFrom(charts[0]["contents"]),
               title: charts[0]["title"]);
           middleContentTemp.addAll(charts.sublist(1));
         }
@@ -127,7 +141,8 @@ class HomeScreenController extends GetxController {
         if (songId != null) {
           final rel = (await _musicServices.getContentRelatedToSong(songId));
           final con = rel.removeAt(0);
-          quickPicks.value = QuickPicks(List<MediaItem>.from(con["contents"]));
+          quickPicks.value = QuickPicks(_mediaItemsFrom(con["contents"]),
+              title: con["title"] ?? "Quick picks");
           middleContentTemp.addAll(rel);
         }
       }
@@ -141,10 +156,15 @@ class HomeScreenController extends GetxController {
             : index;
         if (fallbackIndex != -1) {
           final con = homeContentListMap.removeAt(fallbackIndex);
-          quickPicks.value = QuickPicks(
-              (con["contents"] as List).whereType<MediaItem>().toList(),
+          quickPicks.value = QuickPicks(_mediaItemsFrom(con["contents"]),
               title: con["title"] ?? "Quick picks");
         }
+      }
+
+      if (quickPicks.value.songList.isEmpty) {
+        printERROR(
+            "Home Content not loaded because no playable items were found");
+        throw NetworkError();
       }
 
       middleContent.value = _setContentList(middleContentTemp);
@@ -161,6 +181,11 @@ class HomeScreenController extends GetxController {
       await Future.delayed(const Duration(seconds: 1));
       networkError.value = !silent;
     }
+  }
+
+  List<MediaItem> _mediaItemsFrom(dynamic contents) {
+    if (contents is! List) return [];
+    return contents.whereType<MediaItem>().toList();
   }
 
   List _setContentList(

@@ -14,6 +14,10 @@ class QuickPicksWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final PlayerController playerController = Get.find<PlayerController>();
+    if (content.songList.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 20.0),
       height:
@@ -23,7 +27,7 @@ class QuickPicksWidget extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            content.title.toLowerCase().removeAllWhitespace.tr,
+            _localizedTitle(content.title),
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall
@@ -48,7 +52,7 @@ class QuickPicksWidget extends StatelessWidget {
                       isScrollControlled: true,
                       context: playerController
                           .homeScaffoldkey.currentState!.context,
-                      barrierColor: Colors.black.withOpacity(0.6),
+                      barrierColor: Colors.black.withValues(alpha: 0.6),
                       builder: (context) => SongInfoBottomSheet(song),
                     ).whenComplete(() => Get.delete<SongInfoController>());
                   },
@@ -61,7 +65,7 @@ class QuickPicksWidget extends StatelessWidget {
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.4),
+                          color: Colors.black.withValues(alpha: 0.4),
                           blurRadius: 10,
                           offset: const Offset(0, 6),
                         ),
@@ -131,5 +135,14 @@ class QuickPicksWidget extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _localizedTitle(String title) {
+    final key = title.toLowerCase().removeAllWhitespace;
+    final translated = key.tr;
+    if (translated != key) {
+      return translated;
+    }
+    return title;
   }
 }

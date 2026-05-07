@@ -340,6 +340,23 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     final newQueue = this.queue.value
       ..replaceRange(0, this.queue.value.length, queue);
     this.queue.add(newQueue);
+    final index = currentIndex;
+    if (index is int &&
+        index >= 0 &&
+        index < newQueue.length &&
+        mediaItem.value?.id == newQueue[index].id) {
+      final currentItem = mediaItem.value;
+      final updatedItem = newQueue[index].copyWith(
+        duration: newQueue[index].duration ?? currentItem?.duration,
+        extras: {
+          ...?newQueue[index].extras,
+          if (currentItem?.extras?['url'] != null)
+            'url': currentItem!.extras!['url'],
+        },
+      );
+      newQueue[index] = updatedItem;
+      mediaItem.add(updatedItem);
+    }
   }
 
   @override
@@ -483,10 +500,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       final songIndex = extras['index'];
       currentIndex = songIndex;
       final isNewUrlReq = extras['newUrl'] ?? false;
-      final currentSong = queue.value[currentIndex];
+      var currentSong = queue.value[currentIndex];
       final streamInfo =
           await checkNGetUrl(currentSong.id, generateNewUrl: isNewUrlReq);
-      mediaItem.add(currentSong);
       if (songIndex != currentIndex) {
         return;
       }
@@ -504,6 +520,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
             errorMessage: errorMessage));
         return;
       }
+      currentSong = _withStreamDuration(currentSong, audio);
+      queue.value[currentIndex] = currentSong;
+      queue.add(queue.value);
+      mediaItem.add(currentSong);
       if (_lastPlayerErrorSongId != currentSong.id) {
         _playerErrorRetries = 0;
         _lastPlayerErrorSongId = currentSong.id;
@@ -552,10 +572,8 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       }
     } else if (name == 'setSourceNPlay') {
       isSongLoading = true;
-      final currMed = (extras!['mediaItem'] as MediaItem);
+      var currMed = (extras!['mediaItem'] as MediaItem);
       currentIndex = 0;
-      mediaItem.add(currMed);
-      queue.add([currMed]);
       final streamInfo = await checkNGetUrl(currMed.id);
       final audio = streamInfo.audio;
       if (!streamInfo.playable || audio == null) {
@@ -571,6 +589,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
             errorMessage: errorMessage));
         return;
       }
+      currMed = _withStreamDuration(currMed, audio);
+      mediaItem.add(currMed);
+      queue.add([currMed]);
       if (_lastPlayerErrorSongId != currMed.id) {
         _playerErrorRetries = 0;
         _lastPlayerErrorSongId = currMed.id;
@@ -623,6 +644,32 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
     } else if (name == "setVolume") {
       _player.setVolume(extras!['value'] / 100);
     }
+  }
+
+  MediaItem _withStreamDuration(MediaItem mediaItem, Audio audio) {
+    final streamDuration =
+        audio.duration > 0 ? Duration(milliseconds: audio.duration) : null;
+    final duration =
+        _resolveDisplayDuration(mediaItem.duration, streamDuration);
+    if (duration == mediaItem.duration) return mediaItem;
+
+    return mediaItem.copyWith(
+      duration: duration,
+      extras: {
+        ...?mediaItem.extras,
+        if (duration != null) 'length': _formatDuration(duration),
+      },
+    );
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60).toString();
+    final seconds = duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    if (hours > 0) {
+      return "$hours:${minutes.padLeft(2, '0')}:$seconds";
+    }
+    return "$minutes:$seconds";
   }
 
   Future<void> saveSessionData() async {
