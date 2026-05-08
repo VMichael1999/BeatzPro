@@ -112,73 +112,69 @@ class SearchScreen extends StatelessWidget {
                               parent: AlwaysScrollableScrollPhysics()),
                           itemCount: list.length,
                           itemBuilder: (context, index) => Padding(
-                            padding:
-                                const EdgeInsets.only(bottom: 8, right: 12),
-                            child: GlassCard(
-                              borderRadius: 20,
-                              padding: EdgeInsets.zero,
+                            padding: const EdgeInsets.only(right: 12),
+                            child: ListTile(
+                              shape: const RoundedRectangleBorder(),
+                              contentPadding:
+                                  const EdgeInsets.only(left: 4, right: 12),
                               onTap: () {
                                 Get.toNamed(
-                                    ScreenNavigationSetup.searchResultScreen,
-                                    id: ScreenNavigationSetup.id,
-                                    arguments: list[index]);
+                                  ScreenNavigationSetup.searchResultScreen,
+                                  id: ScreenNavigationSetup.id,
+                                  arguments: list[index],
+                                );
                                 searchScreenController
                                     .addToHistryQueryList(list[index]);
                               },
-                              child: ListTile(
-                                contentPadding:
-                                    const EdgeInsets.only(left: 14, right: 12),
-                                leading:
-                                    isEmpty ? const Icon(Icons.history) : null,
-                                minLeadingWidth: 20,
-                                dense: true,
-                                title: Text(list[index]),
-                                trailing: SizedBox(
-                                  width: 80,
-                                  child: Row(
-                                    children: [
-                                      isEmpty
-                                          ? IconButton(
-                                              iconSize: 18,
-                                              splashRadius: 18,
-                                              visualDensity:
-                                                  const VisualDensity(
-                                                      horizontal: -2),
-                                              onPressed: () {
-                                                searchScreenController
-                                                    .removeQueryFromHistory(
-                                                        list[index]);
-                                              },
-                                              icon: Icon(
-                                                Icons.clear,
-                                                color: Theme.of(context)
-                                                    .textTheme
-                                                    .titleMedium!
-                                                    .color,
-                                              ),
-                                            )
-                                          : const SizedBox(
-                                              width: 40,
+                              leading:
+                                  isEmpty ? const Icon(Icons.history) : null,
+                              minLeadingWidth: 20,
+                              dense: true,
+                              title: Text(list[index]),
+                              trailing: SizedBox(
+                                width: 80,
+                                child: Row(
+                                  children: [
+                                    isEmpty
+                                        ? IconButton(
+                                            iconSize: 18,
+                                            splashRadius: 18,
+                                            visualDensity: const VisualDensity(
+                                                horizontal: -2),
+                                            onPressed: () {
+                                              searchScreenController
+                                                  .removeQueryFromHistory(
+                                                      list[index]);
+                                            },
+                                            icon: Icon(
+                                              Icons.clear,
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium!
+                                                  .color,
                                             ),
-                                      IconButton(
-                                        iconSize: 20,
-                                        splashRadius: 18,
-                                        visualDensity:
-                                            const VisualDensity(horizontal: -2),
-                                        onPressed: () {
-                                          searchScreenController
-                                              .suggestionInput(list[index]);
-                                        },
-                                        icon: Icon(
-                                          Icons.north_west,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium!
-                                              .color,
-                                        ),
+                                          )
+                                        : const SizedBox(
+                                            width: 40,
+                                          ),
+                                    IconButton(
+                                      iconSize: 20,
+                                      splashRadius: 18,
+                                      visualDensity:
+                                          const VisualDensity(horizontal: -2),
+                                      onPressed: () {
+                                        searchScreenController
+                                            .suggestionInput(list[index]);
+                                      },
+                                      icon: Icon(
+                                        Icons.north_west,
+                                        color: Theme.of(context)
+                                            .textTheme
+                                            .titleMedium!
+                                            .color,
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),

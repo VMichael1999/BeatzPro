@@ -70,7 +70,7 @@ class GlassContainer extends StatelessWidget {
     final radius = BorderRadius.circular(borderRadius);
     final glassTint = color ??
         Colors.white.withValues(
-          alpha: (opacity + 0.04).clamp(0.04, 0.22),
+          alpha: (opacity + 0.08).clamp(0.08, 0.28),
         );
     final content = AnimatedContainer(
       duration: const Duration(milliseconds: 220),
@@ -109,32 +109,24 @@ class GlassContainer extends StatelessWidget {
               : shadows,
         ),
         child: useLiquidGlass
-            ? LiquidGlassLayer(
+            ? LiquidGlass.withOwnLayer(
                 fake: fakeLiquidGlass,
-                useBackdropGroup: true,
-                settings: LiquidGlassSettings(
-                  blur: blur.clamp(4, 18),
-                  thickness: fakeLiquidGlass ? 12 : 20,
-                  glassColor: glassTint,
+                settings: LiquidGlassSettings.figma(
+                  depth: fakeLiquidGlass ? 24 : 50,
+                  refraction: fakeLiquidGlass ? 42 : 96,
                   lightAngle: 0.5 * math.pi,
-                  lightIntensity: 0.62,
-                  ambientStrength: 0.10,
-                  saturation: 1.35,
-                  chromaticAberration: fakeLiquidGlass ? 0 : 1,
+                  dispersion: fakeLiquidGlass ? 1.0 : 3.0,
+                  frost: blur.clamp(2, 18),
+                  glassColor: glassTint,
                 ),
-                child: LiquidGlassBlendGroup(
-                  blend: fakeLiquidGlass ? 0 : 8,
-                  child: LiquidGlass(
-                    shape: LiquidRoundedSuperellipse(
-                      borderRadius: borderRadius,
-                    ),
-                    clipBehavior: clipBehavior,
-                    child: GlassGlow(
-                      glowColor: Colors.white.withValues(alpha: 0.18),
-                      glowRadius: 0.8,
-                      child: content,
-                    ),
-                  ),
+                shape: LiquidRoundedSuperellipse(
+                  borderRadius: borderRadius,
+                ),
+                clipBehavior: clipBehavior,
+                child: GlassGlow(
+                  glowColor: Colors.white.withValues(alpha: 0.20),
+                  glowRadius: fakeLiquidGlass ? 0.4 : 0.9,
+                  child: content,
                 ),
               )
             : ClipRRect(
@@ -257,10 +249,25 @@ class GlassButton extends StatelessWidget {
                 HapticFeedback.selectionClick();
                 onPressed!();
               },
-        icon: Icon(
-          icon,
-          size: iconSize,
-          color: isPrimary ? Theme.of(context).primaryColor : foreground,
+        icon: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 260),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeInCubic,
+          transitionBuilder: (child, animation) {
+            final scale = Tween<double>(begin: 0.72, end: 1).animate(
+              CurvedAnimation(parent: animation, curve: Curves.easeOutBack),
+            );
+            return FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(scale: scale, child: child),
+            );
+          },
+          child: Icon(
+            icon,
+            key: ValueKey<int>(icon.codePoint),
+            size: iconSize,
+            color: isPrimary ? Theme.of(context).primaryColor : foreground,
+          ),
         ),
       ),
     );
@@ -289,6 +296,7 @@ class GlassBottomBar extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         borderRadius: 30,
         opacity: 0.11,
+        borderOpacity: 0,
         blur: 22,
         fakeLiquidGlass: false,
         child: Row(
@@ -353,9 +361,6 @@ class _GlassBottomBarTile extends StatelessWidget {
         color: selected
             ? Colors.white.withValues(alpha: 0.16)
             : Colors.transparent,
-        border: selected
-            ? Border.all(color: Colors.white.withValues(alpha: 0.18))
-            : null,
       ),
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
@@ -364,7 +369,7 @@ class _GlassBottomBarTile extends StatelessWidget {
           onTap();
         },
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 9),
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

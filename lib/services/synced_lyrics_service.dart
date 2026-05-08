@@ -9,7 +9,12 @@ class SyncedLyricsService {
     final lyricsBox = await Hive.openBox("lyrics");
     // check if lyrics available in local database
     if (lyricsBox.containsKey(song.id)) {
-      return Map<String, dynamic>.from(await lyricsBox.get(song.id));
+      final cachedLyrics =
+          Map<String, dynamic>.from(await lyricsBox.get(song.id));
+      if (_hasUsableLyrics(cachedLyrics)) {
+        return cachedLyrics;
+      }
+      await lyricsBox.delete(song.id);
     }
 
     final dio = Dio(BaseOptions(
@@ -18,7 +23,7 @@ class SyncedLyricsService {
       receiveTimeout: const Duration(seconds: 8),
     ));
     final dur = song.duration?.inSeconds ?? durInSec;
-    final artist = _cleanSearchText(song.artist ?? "");
+    final artist = _cleanArtist(song.artist ?? "");
     final title = _cleanSearchText(song.title);
     final album = _cleanSearchText(song.album ?? "");
 
@@ -42,17 +47,25 @@ class SyncedLyricsService {
     }
 
     try {
-      final searchResponse = await dio.get(
-        '/api/search',
-        queryParameters: {
-          'artist_name': artist,
+      final searchQueries = [
+        {
+          if (artist.isNotEmpty) 'artist_name': artist,
           'track_name': title,
         },
-      );
-      final lyricsData = _bestLyricsFromSearch(searchResponse.data, dur);
-      if (lyricsData != null) {
-        await lyricsBox.put(song.id, lyricsData);
-        return lyricsData;
+        {'track_name': title},
+        {'q': artist.isEmpty ? title : '$title $artist'},
+      ];
+
+      for (final query in searchQueries) {
+        final searchResponse = await dio.get(
+          '/api/search',
+          queryParameters: query,
+        );
+        final lyricsData = _bestLyricsFromSearch(searchResponse.data, dur);
+        if (lyricsData != null) {
+          await lyricsBox.put(song.id, lyricsData);
+          return lyricsData;
+        }
       }
     } on DioException catch (e) {
       printERROR(e.response);
@@ -108,6 +121,13 @@ class SyncedLyricsService {
     };
   }
 
+  static bool _hasUsableLyrics(Map<String, dynamic> lyrics) {
+    final syncedLyrics = lyrics['synced']?.toString().trim() ?? "";
+    final plainLyrics = lyrics['plainLyrics']?.toString().trim() ?? "";
+    return syncedLyrics.isNotEmpty ||
+        (plainLyrics.isNotEmpty && plainLyrics != "NA");
+  }
+
   static String _cleanSearchText(String text) {
     return text
         .replaceAll(RegExp(r'\([^)]*\)'), ' ')
@@ -122,5 +142,27 @@ class SyncedLyricsService {
             ' ')
         .replaceAll(RegExp(r'\s+'), ' ')
         .trim();
+  }
+
+  static String _cleanArtist(String artist) {
+    final cleanArtist = _cleanSearchText(artist);
+    if (!cleanArtist.contains('•')) return cleanArtist;
+
+    final parts = cleanArtist
+        .split('•')
+        .map((part) => part.trim())
+        .where((part) => part.isNotEmpty)
+        .toList();
+    if (parts.isEmpty) return cleanArtist;
+
+    final nonMetadataParts = parts
+        .where((part) =>
+            !RegExp(r'^(song|video)$', caseSensitive: false).hasMatch(part) &&
+            !RegExp(r'\b(views?|visualizaciones|reproducciones)\b',
+                    caseSensitive: false)
+                .hasMatch(part))
+        .toList();
+
+    return nonMetadataParts.isEmpty ? parts.first : nonMetadataParts.last;
   }
 }

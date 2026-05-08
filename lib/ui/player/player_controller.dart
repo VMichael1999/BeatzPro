@@ -655,8 +655,10 @@ class PlayerController extends GetxController {
     showLyricsflag.value = !showLyricsflag.value;
     if (!showLyricsflag.value || currentSong.value == null) return;
 
-    final hasLyrics = lyrics["synced"].toString().trim().isNotEmpty ||
-        lyrics["plainLyrics"].toString().trim().isNotEmpty;
+    final syncedLyrics = lyrics["synced"].toString().trim();
+    final plainLyrics = lyrics["plainLyrics"].toString().trim();
+    final hasLyrics = syncedLyrics.isNotEmpty ||
+        (plainLyrics.isNotEmpty && plainLyrics != "NA");
     if (hasLyrics) return;
 
     isLyricsLoading.value = true;

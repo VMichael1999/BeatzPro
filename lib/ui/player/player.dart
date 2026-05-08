@@ -90,14 +90,14 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
     final controlsBottomGap =
         collapsedPanelHeight + (isTinyHeight ? 10.0 : 14.0);
     final lyricsPanelHeight = math.max(
-      isTinyHeight ? 210.0 : 235.0,
+      isTinyHeight ? 245.0 : 285.0,
       math.min(
         isTinyHeight
-            ? size.height * 0.32
+            ? size.height * 0.38
             : isCompactHeight
-                ? size.height * 0.35
-                : size.height * 0.38,
-        playerArtImageSize * (isTinyHeight ? 1.25 : 1.45),
+                ? size.height * 0.43
+                : size.height * 0.46,
+        playerArtImageSize * (isTinyHeight ? 1.55 : 1.82),
       ),
     );
     final List<Color> colors = [
@@ -519,101 +519,193 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
               ),
             ],
           ),
-          SizedBox(height: compact ? 10 : 14),
+          SizedBox(height: compact ? 8 : 10),
+          _buildLyricsModeControl(playerController, compact: compact),
+          SizedBox(height: compact ? 8 : 10),
           Expanded(
-            child: Stack(
-              children: [
-                Positioned.fill(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.black.withValues(alpha: 0.02),
-                          Colors.black.withValues(alpha: 0.18),
-                          Colors.black.withValues(alpha: 0.02),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-                Positioned.fill(
-                  child: Obx(
-                    () {
-                      if (playerController.isLyricsLoading.isTrue) {
-                        return const Center(child: LoadingIndicator());
-                      }
-
-                      final syncedLyrics =
-                          playerController.lyrics["synced"]?.toString() ?? "";
-                      final plainLyrics =
-                          playerController.lyrics["plainLyrics"]?.toString() ??
-                              "";
-                      final shouldShowPlain =
-                          playerController.lyricsMode.toInt() == 1 ||
-                              syncedLyrics.trim().isEmpty;
-
-                      if (shouldShowPlain) {
-                        return _buildPlainLyricsText(
-                          plainLyrics,
-                          compact: compact,
-                        );
-                      }
-
-                      return IgnorePointer(
-                        child: LyricsReader(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 4,
-                            vertical: compact ? 18 : 26,
-                          ),
-                          lyricUi: CustomLyricUI(
-                            primaryColor: Colors.white.withValues(alpha: 0.30),
-                            highlightColor:
-                                Colors.white.withValues(alpha: 0.94),
-                            fontSize: compact ? 22 : 25,
-                            highlightFontSize: compact ? 25 : 29,
-                          ),
-                          position: playerController
-                              .progressBarStatus.value.current.inMilliseconds,
-                          model: LyricsModelBuilder.create()
-                              .bindLyricToMain(syncedLyrics)
-                              .getModel(),
-                          emptyBuilder: () => _buildPlainLyricsText(
-                            plainLyrics,
-                            compact: compact,
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                IgnorePointer(
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Theme.of(context)
-                              .primaryColor
-                              .withValues(alpha: 0.78),
-                          Colors.transparent,
-                          Colors.transparent,
-                          Theme.of(context)
-                              .primaryColor
-                              .withValues(alpha: 0.72),
-                        ],
-                        stops: const [0, 0.22, 0.72, 1],
-                      ),
-                    ),
-                  ),
+            child: GlassContainer(
+              width: double.infinity,
+              borderRadius: 24,
+              opacity: 0.10,
+              blur: 18,
+              borderOpacity: 0.12,
+              fakeLiquidGlass: false,
+              color: Colors.black.withValues(alpha: 0.36),
+              shadows: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.26),
+                  blurRadius: 28,
+                  offset: const Offset(0, 14),
                 ),
               ],
+              child: Stack(
+                children: [
+                  Positioned.fill(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Colors.black.withValues(alpha: 0.18),
+                            Colors.black.withValues(alpha: 0.06),
+                            Colors.black.withValues(alpha: 0.18),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned.fill(
+                    child: Obx(
+                      () {
+                        if (playerController.isLyricsLoading.isTrue) {
+                          return const Center(child: LoadingIndicator());
+                        }
+
+                        final syncedLyrics =
+                            playerController.lyrics["synced"]?.toString() ?? "";
+                        final plainLyrics = playerController
+                                .lyrics["plainLyrics"]
+                                ?.toString() ??
+                            "";
+                        final shouldShowPlain =
+                            playerController.lyricsMode.toInt() == 1 ||
+                                syncedLyrics.trim().isEmpty;
+
+                        if (shouldShowPlain) {
+                          return _buildPlainLyricsText(
+                            plainLyrics,
+                            compact: compact,
+                          );
+                        }
+
+                        return IgnorePointer(
+                          child: LyricsReader(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: compact ? 18 : 26,
+                            ),
+                            lyricUi: CustomLyricUI(
+                              primaryColor:
+                                  Colors.white.withValues(alpha: 0.32),
+                              highlightColor:
+                                  Colors.white.withValues(alpha: 0.94),
+                              fontSize: compact ? 22 : 25,
+                              highlightFontSize: compact ? 25 : 29,
+                            ),
+                            position: playerController
+                                .progressBarStatus.value.current.inMilliseconds,
+                            model: LyricsModelBuilder.create()
+                                .bindLyricToMain(syncedLyrics)
+                                .getModel(),
+                            emptyBuilder: () => _buildPlainLyricsText(
+                              plainLyrics,
+                              compact: compact,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  IgnorePointer(
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [
+                            Theme.of(context)
+                                .primaryColor
+                                .withValues(alpha: 0.72),
+                            Colors.transparent,
+                            Colors.transparent,
+                            Colors.transparent,
+                            Theme.of(context)
+                                .primaryColor
+                                .withValues(alpha: 0.72),
+                          ],
+                          stops: const [0, 0.18, 0.50, 0.82, 1],
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildLyricsModeControl(
+    PlayerController playerController, {
+    required bool compact,
+  }) {
+    return Obx(
+      () {
+        final syncedLyrics =
+            playerController.lyrics["synced"]?.toString().trim() ?? "";
+        final hasSyncedLyrics = syncedLyrics.isNotEmpty;
+
+        return Align(
+          alignment: Alignment.center,
+          child: GlassContainer(
+            padding: const EdgeInsets.all(3),
+            borderRadius: 22,
+            opacity: 0.08,
+            blur: 14,
+            borderOpacity: 0.10,
+            fakeLiquidGlass: false,
+            child: CupertinoSlidingSegmentedControl<int>(
+              groupValue: playerController.lyricsMode.value,
+              backgroundColor: Colors.black.withValues(alpha: 0.18),
+              thumbColor: Colors.white.withValues(alpha: 0.18),
+              padding: EdgeInsets.zero,
+              children: {
+                0: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 12 : 16,
+                    vertical: compact ? 6 : 7,
+                  ),
+                  child: Text(
+                    'synced'.tr,
+                    style: TextStyle(
+                      color: hasSyncedLyrics
+                          ? Colors.white
+                          : Colors.white.withValues(alpha: 0.42),
+                      fontSize: compact ? 12 : 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+                1: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: compact ? 12 : 16,
+                    vertical: compact ? 6 : 7,
+                  ),
+                  child: Text(
+                    'plain'.tr,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: compact ? 12 : 13,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 0,
+                    ),
+                  ),
+                ),
+              },
+              onValueChanged: (value) {
+                if (value != null) {
+                  playerController.changeLyricsMode(value);
+                }
+              },
+            ),
+          ),
+        );
+      },
     );
   }
 
