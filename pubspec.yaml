@@ -92,6 +92,7 @@ dependencies:
   text_neon_widget: ^1.0.6
   carousel_animations: ^0.0.4
   music_visualizer: ^1.0.4
+  liquid_glass_renderer: ^0.2.0-dev.4
 
 
 dev_dependencies:

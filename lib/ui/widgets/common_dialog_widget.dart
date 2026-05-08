@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import 'glass_widgets.dart';
+
 class CommonDialog extends StatelessWidget {
   const CommonDialog({super.key, this.child});
   final Widget? child;
@@ -10,9 +12,18 @@ class CommonDialog extends StatelessWidget {
       child: ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 500),
           child: Dialog(
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20),
             shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: child,
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+            child: GlassContainer(
+              borderRadius: 28,
+              blur: 22,
+              opacity: 0.14,
+              padding: EdgeInsets.zero,
+              child: child ?? const SizedBox.shrink(),
+            ),
           )),
     );
   }

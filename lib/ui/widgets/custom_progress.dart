@@ -6,7 +6,8 @@ class CustomProgressBar extends StatelessWidget {
   final double maxValue;
   final ValueChanged<double> onChanged;
 
-  CustomProgressBar({
+  const CustomProgressBar({
+    super.key,
     required this.currentSliderValue,
     required this.maxValue,
     required this.onChanged,
@@ -25,22 +26,25 @@ class CustomProgressBar extends StatelessWidget {
           data: SliderTheme.of(context).copyWith(
             activeTrackColor: Theme.of(context)
                 .primaryColor
-                .withLightness(0.5), // Color de la barra de progreso
+                .withLightness(0.62)
+                .withValues(alpha: 0.92),
             inactiveTrackColor: Theme.of(context)
                 .primaryColor
-                .withLightness(0.3), // Color de la barra sin progreso
-            thumbColor: Theme.of(context)
-                .primaryColor
-                .withLightness(0.7), // Color del "thumb"
+                .withLightness(0.3)
+                .withValues(alpha: 0.46),
+            thumbColor: Theme.of(context).primaryColor.withLightness(0.82),
             thumbShape: CustomSliderThumbRect(
-              thumbHeight: 40.0,
-              thumbWidth: 10.0,
+              thumbHeight: 38.0,
+              thumbWidth: 8.0,
               innerColor: Theme.of(context)
-                  .primaryColor, // Color adicional en el centro del thumb
-              innerWidth: 4.0, // Ancho del color interno
-              innerHeight: 35.0, // Altura del color interno
+                  .primaryColor
+                  .withLightness(0.28)
+                  .withValues(alpha: 0.72),
+              innerWidth: 3.0,
+              innerHeight: 32.0,
             ),
-            trackHeight: 20.0, // Altura de la barra de progreso
+            trackHeight: 14.0,
+            overlayShape: const RoundSliderOverlayShape(overlayRadius: 18),
           ),
           child: Slider(
             value: safeCurrentValue,
@@ -56,11 +60,17 @@ class CustomProgressBar extends StatelessWidget {
             children: [
               Text(
                 _formatDuration(safeCurrentValue),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
               Text(
                 _formatDuration(safeMaxValue),
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ],
           ),
@@ -80,9 +90,9 @@ class CustomProgressBar extends StatelessWidget {
 class CustomSliderThumbRect extends SliderComponentShape {
   final double thumbWidth;
   final double thumbHeight;
-  final Color innerColor; // Nuevo color central
-  final double innerWidth; // Ancho del color central
-  final double innerHeight; // Altura del color central
+  final Color innerColor;
+  final double innerWidth;
+  final double innerHeight;
 
   const CustomSliderThumbRect({
     required this.thumbWidth,
@@ -123,12 +133,10 @@ class CustomSliderThumbRect extends SliderComponentShape {
     );
 
     context.canvas.drawRRect(
-      RRect.fromRectAndRadius(
-          rect, const Radius.circular(4.0)), // Radio de los bordes
+      RRect.fromRectAndRadius(rect, const Radius.circular(8.0)),
       paint,
     );
 
-    // Pintar el color central adicional
     final innerPaint = Paint()
       ..color = innerColor
       ..style = PaintingStyle.fill;
@@ -136,12 +144,11 @@ class CustomSliderThumbRect extends SliderComponentShape {
     final innerRect = Rect.fromCenter(
       center: center,
       width: innerWidth,
-      height: innerHeight, // Altura del color interno
+      height: innerHeight,
     );
 
     context.canvas.drawRRect(
-      RRect.fromRectAndRadius(innerRect,
-          const Radius.circular(2.0)), // Radio de los bordes internos
+      RRect.fromRectAndRadius(innerRect, const Radius.circular(5.0)),
       innerPaint,
     );
   }

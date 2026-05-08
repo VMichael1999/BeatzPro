@@ -210,6 +210,8 @@ class PlayerController extends GetxController {
         val.buffered = oldState.buffered;
       });
       if (mediaItem != null) {
+        final previousSongId = currentSong.value?.id;
+        final isNewSong = previousSongId != mediaItem.id;
         printINFO(mediaItem.title);
         _newSongFlag = true;
         isCurrentSongBuffered.value = false;
@@ -227,8 +229,10 @@ class PlayerController extends GetxController {
         if (isRadioModeOn && (currentSong.value!.id == currentQueue.last.id)) {
           await _addRadioContinuation(radioInitiatorItem!);
         }
-        lyrics.value = {"synced": "", "plainLyrics": ""};
-        showLyricsflag.value = false;
+        if (isNewSong) {
+          lyrics.value = {"synced": "", "plainLyrics": ""};
+          showLyricsflag.value = false;
+        }
       }
     });
   }
@@ -649,30 +653,39 @@ class PlayerController extends GetxController {
 
   Future<void> showLyrics() async {
     showLyricsflag.value = !showLyricsflag.value;
-    if ((lyrics["synced"].isEmpty && lyrics['plainLyrics'].isEmpty) &&
-        showLyricsflag.value) {
-      isLyricsLoading.value = true;
-      try {
-        final Map<String, dynamic>? lyricsR =
-            await SyncedLyricsService.getSyncedLyrics(
-                currentSong.value!, progressBarStatus.value.total.inSeconds);
-        if (lyricsR != null) {
-          lyrics.value = lyricsR;
-          isLyricsLoading.value = false;
-          return;
-        }
-        final related = await _musicServices.getWatchPlaylist(
-            videoId: currentSong.value!.id, onlyRelated: true);
-        final relatedLyricsId = related['lyrics'];
-        if (relatedLyricsId != null) {
-          final lyrics_ = await _musicServices.getLyrics(relatedLyricsId);
-          lyrics.value = {"synced": "", "plainLyrics": lyrics_};
-        } else {
-          lyrics.value = {"synced": "", "plainLyrics": "NA"};
-        }
-      } catch (e) {
+    if (!showLyricsflag.value || currentSong.value == null) return;
+
+    final hasLyrics = lyrics["synced"].toString().trim().isNotEmpty ||
+        lyrics["plainLyrics"].toString().trim().isNotEmpty;
+    if (hasLyrics) return;
+
+    isLyricsLoading.value = true;
+    try {
+      final Map<String, dynamic>? lyricsR =
+          await SyncedLyricsService.getSyncedLyrics(
+              currentSong.value!, progressBarStatus.value.total.inSeconds);
+      if (lyricsR != null) {
+        lyrics.value = lyricsR;
+        return;
+      }
+
+      final related = await _musicServices.getWatchPlaylist(
+          videoId: currentSong.value!.id, onlyRelated: true);
+      final relatedLyricsId = related['lyrics'];
+      if (relatedLyricsId != null) {
+        final lyrics_ = await _musicServices.getLyrics(relatedLyricsId);
+        final plainLyrics = lyrics_?.toString().trim() ?? "";
+        lyrics.value = {
+          "synced": "",
+          "plainLyrics": plainLyrics.isEmpty ? "NA" : plainLyrics,
+        };
+      } else {
         lyrics.value = {"synced": "", "plainLyrics": "NA"};
       }
+    } catch (e) {
+      printERROR(e);
+      lyrics.value = {"synced": "", "plainLyrics": "NA"};
+    } finally {
       isLyricsLoading.value = false;
     }
   }

@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '/models/quick_picks.dart';
 import '../player/player_controller.dart';
+import 'glass_widgets.dart';
 import 'image_widget.dart';
 import 'songinfo_bottom_sheet.dart';
 
@@ -20,8 +21,7 @@ class QuickPicksWidget extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 1.0, vertical: 20.0),
-      height:
-          400, // Aumentar un poco la altura para acomodar la imagen más grande
+      height: 390,
       width: double.infinity,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -31,7 +31,7 @@ class QuickPicksWidget extends StatelessWidget {
             style: Theme.of(context)
                 .textTheme
                 .headlineSmall
-                ?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
+                ?.copyWith(color: Colors.white, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 20),
           Expanded(
@@ -56,52 +56,35 @@ class QuickPicksWidget extends StatelessWidget {
                       builder: (context) => SongInfoBottomSheet(song),
                     ).whenComplete(() => Get.delete<SongInfoController>());
                   },
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
+                  child: GlassCard(
                     margin: const EdgeInsets.symmetric(horizontal: 12.0),
                     padding: const EdgeInsets.all(12.0),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).primaryColor,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.4),
-                          blurRadius: 10,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                      gradient: LinearGradient(
-                        colors: [
-                          Theme.of(context).primaryColor,
-                          Colors.black87
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                      ),
-                    ),
+                    borderRadius: 28,
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(20.0),
-                          child: ImageWidget(
-                            song: song,
-                            size:
-                                150, // Tamaño más grande para destacar la imagen
+                        Hero(
+                          tag: "quick-pick-${song.id}",
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(24.0),
+                            child: ImageWidget(
+                              song: song,
+                              size: 150,
+                            ),
                           ),
                         ),
-                        const SizedBox(height: 20), // Mayor separación
+                        const SizedBox(height: 18),
                         Text(
                           song.title,
                           overflow: TextOverflow.ellipsis,
                           style:
                               Theme.of(context).textTheme.titleMedium?.copyWith(
                                     color: Colors.white,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w900,
                                   ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 10), // Mayor separación
+                        const SizedBox(height: 8),
                         Text(
                           song.artist.toString(),
                           maxLines: 1,
@@ -121,15 +104,9 @@ class QuickPicksWidget extends StatelessWidget {
               autoplayDelay: 3000,
               autoplayDisableOnInteraction: true,
               loop: true,
-              viewportFraction:
-                  0.75, // Reducido para dar más espacio a la imagen
-              scale: 0.85, // Ligera reducción para destacar la imagen central
-              fade: 0.4, // Aumentado para una transición más suave
-              // control: const SwiperControl(
-              //   color: Colors.white, // Color de las flechas
-              //   padding: EdgeInsets.symmetric(horizontal: 20.0), // Espacio alrededor de las flechas
-              //   size: 24.0, // Tamaño de las flechas
-              // ),
+              viewportFraction: 0.75,
+              scale: 0.86,
+              fade: 0.35,
             ),
           ),
         ],

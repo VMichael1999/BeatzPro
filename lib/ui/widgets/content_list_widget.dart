@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 
 import '../screens/Search/search_result_screen_controller.dart';
 import '/ui/widgets/content_list_widget_item.dart';
+import 'glass_widgets.dart';
 
 class ContentListWidget extends StatelessWidget {
   /// ContentListWidget is used to render a section of Content like a list of Albums or Playlists in HomeScreen
@@ -19,18 +20,13 @@ class ContentListWidget extends StatelessWidget {
     final itemCount =
         isAlbumContent ? content.albumList.length : content.playlistList.length;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return GlassContainer(
+      margin: const EdgeInsets.only(right: 12, bottom: 18),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 18.0),
+      borderRadius: 28,
+      opacity: 0.06,
+      blur: 10,
+      shadows: const [],
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -46,7 +42,8 @@ class ContentListWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0,
                       ),
                 ),
               ),

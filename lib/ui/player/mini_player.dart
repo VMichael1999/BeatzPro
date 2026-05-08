@@ -8,6 +8,7 @@ import '/ui/widgets/marqwee_widget.dart';
 import '../widgets/add_to_playlist.dart';
 import '../widgets/sleep_timer_bottom_sheet.dart';
 import '../widgets/song_download_btn.dart';
+import '../widgets/glass_widgets.dart';
 import '../widgets/image_widget.dart';
 import '../widgets/mini_player_progress_bar.dart';
 
@@ -24,10 +25,25 @@ class MiniPlayer extends StatelessWidget {
         visible: playerController.isPlayerpanelTopVisible.value,
         child: Opacity(
           opacity: playerController.playerPaneOpacity.value,
-          child: Container(
+          child: GlassContainer(
             height: playerController.playerPanelMinHeight.value,
             width: size.width,
-            color: Theme.of(context).bottomSheetTheme.backgroundColor,
+            margin: EdgeInsets.zero,
+            borderRadius: 0,
+            opacity: 0.18,
+            blur: 18,
+            borderOpacity: 0,
+            fakeLiquidGlass: false,
+            shadows: const [],
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                Colors.white.withValues(alpha: 0.10),
+                Theme.of(context).primaryColor.withValues(alpha: 0.16),
+                Colors.black.withValues(alpha: 0.34),
+              ],
+            ),
             child: Center(
               child: Column(
                 children: [
@@ -35,9 +51,7 @@ class MiniPlayer extends StatelessWidget {
                       ? GetX<PlayerController>(
                           builder: (controller) => Container(
                               height: 3,
-                              color: Theme.of(context)
-                                  .progressIndicatorTheme
-                                  .color,
+                              color: Colors.transparent,
                               child: MiniPlayerProgressBar(
                                   progressBarStatus:
                                       controller.progressBarStatus.value,
@@ -82,8 +96,9 @@ class MiniPlayer extends StatelessWidget {
                     onHorizontalDragEnd: (details) =>
                         _handleHorizontalSwipe(details, playerController),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 17.0, vertical: 7),
+                      padding: EdgeInsets.symmetric(
+                          horizontal: isWideScreen ? 22.0 : 14.0,
+                          vertical: isWideScreen ? 8 : 6),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         crossAxisAlignment: CrossAxisAlignment.center,
@@ -92,9 +107,17 @@ class MiniPlayer extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
                               playerController.currentSong.value != null
-                                  ? ImageWidget(
-                                      size: 50,
-                                      song: playerController.currentSong.value!,
+                                  ? Hero(
+                                      tag:
+                                          "current-song-${playerController.currentSong.value!.id}",
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(14),
+                                        child: ImageWidget(
+                                          size: 50,
+                                          song: playerController
+                                              .currentSong.value!,
+                                        ),
+                                      ),
                                     )
                                   : const SizedBox(
                                       height: 50,
@@ -118,8 +141,13 @@ class MiniPlayer extends StatelessWidget {
                                             .currentSong.value!.title
                                         : "",
                                     maxLines: 1,
-                                    style:
-                                        Theme.of(context).textTheme.titleMedium,
+                                    style: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.w900,
+                                          letterSpacing: 0,
+                                        ),
                                   ),
                                 ),
                                 SizedBox(
@@ -133,7 +161,15 @@ class MiniPlayer extends StatelessWidget {
                                       maxLines: 1,
                                       style: Theme.of(context)
                                           .textTheme
-                                          .titleSmall,
+                                          .titleSmall
+                                          ?.copyWith(
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleSmall
+                                                ?.color
+                                                ?.withValues(alpha: 0.74),
+                                            letterSpacing: 0,
+                                          ),
                                     ),
                                   ),
                                 ),
@@ -183,15 +219,13 @@ class MiniPlayer extends StatelessWidget {
                                         ),
                                       )),
                                 isWideScreen
-                                    ? Container(
-                                        decoration: BoxDecoration(
-                                            color: Theme.of(context)
-                                                .colorScheme
-                                                .secondary,
-                                            borderRadius:
-                                                BorderRadius.circular(10)),
+                                    ? GlassContainer(
                                         width: 58,
                                         height: 58,
+                                        borderRadius: 20,
+                                        blur: 10,
+                                        opacity: 0.20,
+                                        padding: EdgeInsets.zero,
                                         child: Center(
                                             child: _playButton(
                                                 context, isWideScreen)))
@@ -237,7 +271,7 @@ class MiniPlayer extends StatelessWidget {
                                                 .textTheme
                                                 .titleLarge!
                                                 .color!
-                                                .withOpacity(0.2),
+                                                .withValues(alpha: 0.2),
                                       )),
                                 if (isWideScreen)
                                   const SizedBox(
