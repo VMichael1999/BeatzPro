@@ -15,6 +15,7 @@ import '../../utils/helper.dart';
 import '../widgets/up_next_queue.dart';
 import '/ui/player/player_controller.dart';
 import '../screens/Settings/settings_screen_controller.dart';
+import '../screens/Home/home_screen_controller.dart';
 import '/ui/utils/theme_controller.dart';
 import '/ui/widgets/songinfo_bottom_sheet.dart';
 import '../widgets/image_widget.dart';
@@ -74,6 +75,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
     final ThemeController themeController = Get.find<ThemeController>();
     final isTinyHeight = size.height < 650;
     final isCompactHeight = size.height < 750;
+    final isSmallHeight = size.height < 870;
     final horizontalPadding = size.width < 360 ? 18.0 : 25.0;
     final availableWidth = size.width - (horizontalPadding * 2);
     final maxArtworkByHeight = size.height *
@@ -239,12 +241,14 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () {
                       final topGap = safeArea.top +
                           (playerController.showLyricsflag.value
-                              ? (isCompactHeight ? 8.0 : 36.0)
+                              ? (isCompactHeight ? 8.0 : isSmallHeight ? 20.0 : 36.0)
                               : (isTinyHeight
                                   ? 6.0
                                   : isCompactHeight
                                       ? 18.0
-                                      : 42.0));
+                                      : isSmallHeight
+                                          ? 26.0
+                                          : 42.0));
                       return SizedBox(height: topGap);
                     },
                   ),
@@ -262,20 +266,14 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                   Obx(
                     () => playerController.currentSong.value != null
                         ? AnimatedSwitcher(
-                            duration: const Duration(milliseconds: 420),
+                            duration: const Duration(milliseconds: 280),
                             transitionBuilder: (child, animation) {
                               return FadeTransition(
-                                opacity: animation,
-                                child: ScaleTransition(
-                                  scale: Tween<double>(begin: 0.98, end: 1)
-                                      .animate(
-                                    CurvedAnimation(
-                                      parent: animation,
-                                      curve: Curves.easeOutCubic,
-                                    ),
-                                  ),
-                                  child: child,
+                                opacity: CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeInOut,
                                 ),
+                                child: child,
                               );
                             },
                             child: playerController.showLyricsflag.value
@@ -301,14 +299,14 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? (isTinyHeight ? 3 : 6)
-                          : (isTinyHeight ? 10 : 16),
+                          : (isTinyHeight ? 10 : isSmallHeight ? 10 : 16),
                     ),
                   ),
                   Obx(
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? 0
-                          : (isTinyHeight ? 6 : 10),
+                          : (isTinyHeight ? 6 : isSmallHeight ? 6 : 10),
                     ),
                   ),
                   Obx(() {
@@ -321,7 +319,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                       child: _buildMusicVisualizer(colors, duration),
                     );
                   }),
-                  SizedBox(height: isTinyHeight ? 6 : 10),
+                  SizedBox(height: isTinyHeight ? 6 : isSmallHeight ? 6 : 10),
                   Obx(
                     () => playerController.showLyricsflag.isFalse
                         ? _buildTrackInfoPanel(playerController)
@@ -331,7 +329,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? (isTinyHeight ? 4 : 8)
-                          : (isTinyHeight ? 12 : 18),
+                          : (isTinyHeight ? 12 : isSmallHeight ? 12 : 18),
                     ),
                   ),
                   GetX<PlayerController>(builder: (controller) {
@@ -354,7 +352,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? (isTinyHeight ? 10 : 14)
-                          : (isTinyHeight ? 18 : 28),
+                          : (isTinyHeight ? 18 : isSmallHeight ? 20 : 28),
                     ),
                   ),
                   if (_shouldShowPlayerControls())
@@ -366,7 +364,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? (isTinyHeight ? 8 : 10)
-                          : (isTinyHeight ? 14 : 20),
+                          : (isTinyHeight ? 14 : isSmallHeight ? 14 : 20),
                     ),
                   ),
                   _buildVolumeGlassSlider(playerController),
@@ -374,7 +372,7 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
                     () => SizedBox(
                       height: playerController.showLyricsflag.isTrue
                           ? (isTinyHeight ? 4 : 6)
-                          : (isTinyHeight ? 10 : 14),
+                          : (isTinyHeight ? 10 : isSmallHeight ? 10 : 14),
                     ),
                   ),
                   _buildBottomPlayerActions(playerController),
@@ -915,15 +913,22 @@ class PlayerState extends State<Player> with SingleTickerProviderStateMixin {
   }
 
   Widget _buildBottomPlayerActions(PlayerController playerController) {
+    final homeScreenController = Get.find<HomeScreenController>();
+    final settingsScreenController = Get.find<SettingsScreenController>();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: [
         GlassButton(
-          icon: Icons.queue_music_rounded,
+          icon: Icons.library_music_rounded,
           size: 40,
           iconSize: 20,
           onPressed: () {
-            playerController.playerPanelController.open();
+            playerController.playerPanelController.close();
+            if (settingsScreenController.isBottomNavBarEnabled.isTrue) {
+              homeScreenController.onBottonBarTabSelected(2);
+            } else {
+              homeScreenController.onSideBarTabSelected(1);
+            }
           },
         ),
         Obx(
