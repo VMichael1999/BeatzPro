@@ -1,6 +1,6 @@
 Reglas de trabajo:
 
-- No crear ramas separadas. Trabajar siempre directamente en la rama principal.
+- Trabajar en ramas con prefijo según el tipo de cambio: `feature/`, `fix/`, `resolve/`, `chore/`, `docs/`, `refactor/` (ej. `feature/artist-screen`). No commitear directo en `main`; integrar mediante pull request.
 - Leer los archivos existentes antes de escribir en ellos.
 - No releer archivos que ya revisaste, salvo que los hayas modificado o exista una razón concreta.
 - Priorizar cambios mínimos y localizados. Evitar refactors amplios si no fueron pedidos.
