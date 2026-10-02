@@ -36,13 +36,14 @@ Future<List<String>?> getSongUrlFromExplode(String songId) async {
   return streamProvider.legacyUrlList;
 }
 
-Future<Map<String, dynamic>> getStreamInfo(String songId, dynamic token) async {
+Future<Map<String, dynamic>> getStreamInfo(String songId, dynamic token,
+    {String? cookies}) async {
   if (songId.substring(0, 4) == "MPED") {
     songId = songId.substring(4);
   }
   BackgroundIsolateBinaryMessenger.ensureInitialized(token);
-  final streamProvider = await StreamProvider.fetch(songId);
-  return streamProvider.hmStreamingData;
+  final streamProvider = await StreamProvider.fetch(songId, cookies: cookies);
+  return streamProvider.streamingData;
 }
 
 Future<List<String>?> getSongUrlFromExplodeIsolate(

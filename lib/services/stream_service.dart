@@ -2,7 +2,19 @@ import 'dart:io';
 
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+import 'visionos_stream.dart';
+import 'yt_auth.dart';
+
 bool get _usesAppleAudioBackend => Platform.isIOS || Platform.isMacOS;
+
+/// Clients tried in order; YouTube blocks some of them depending on the video.
+/// androidVr goes first: it is the only one of these that does not need a
+/// PO token for full-length audio (the others are cut with 403 after ~1 MiB).
+const playerClients = [
+  YoutubeApiClient.androidVr,
+  YoutubeApiClient.androidSdkless,
+  YoutubeApiClient.android,
+];
 
 class StreamProvider {
   final bool playable;
@@ -15,11 +27,22 @@ class StreamProvider {
     this.statusMSG = "",
   });
 
-  static Future<StreamProvider> fetch(String videoId) async {
-    final yt = YoutubeExplode();
+  /// [cookies] is the signed-in YouTube session (see [YtAuth]); it has to be
+  /// passed in explicitly because this also runs inside isolates.
+  static Future<StreamProvider> fetch(String videoId, {String? cookies}) async {
+    final visionOs = await VisionOsStream.fetch(videoId);
+    if (visionOs != null) return visionOs;
+
+    final signedIn = cookies != null && cookies.isNotEmpty;
+    final yt = signedIn
+        ? YoutubeExplode(httpClient: AuthYoutubeHttpClient(cookies))
+        : YoutubeExplode();
 
     try {
-      final res = await yt.videos.streamsClient.getManifest(videoId);
+      final res = await yt.videos.streamsClient.getManifest(videoId,
+          ytClients: signedIn
+              ? [YoutubeApiClient.tv, ...playerClients]
+              : playerClients);
       final audio = res.audioOnly;
       if (audio.isEmpty) {
         return StreamProvider(
@@ -36,8 +59,8 @@ class StreamProvider {
                   audioCodec:
                       e.audioCodec.contains('mp') ? Codec.mp4a : Codec.opus,
                   bitrate: e.bitrate.bitsPerSecond,
-                  duration: e.duration ?? 0,
-                  loudnessDb: e.loudnessDb,
+                  duration: 0,
+                  loudnessDb: 0,
                   url: e.url.toString(),
                   size: e.size.totalBytes,
                 ))
@@ -48,7 +71,7 @@ class StreamProvider {
         return StreamProvider(playable: false, statusMSG: "networkError");
       } else if (e is VideoUnplayableException) {
         return StreamProvider(
-            playable: false, statusMSG: e.reason ?? "Song is unplayable");
+            playable: false, statusMSG: "Song is unplayable");
       } else if (e is VideoRequiresPurchaseException) {
         return StreamProvider(
             playable: false, statusMSG: "Song requires purchase");
@@ -114,7 +137,7 @@ class StreamProvider {
     ];
   }
 
-  Map<String, dynamic> get hmStreamingData {
+  Map<String, dynamic> get streamingData {
     final lowQuality = lowQualityAudio;
     final highQuality = highestQualityAudio;
     final hasAudio = lowQuality != null && highQuality != null;

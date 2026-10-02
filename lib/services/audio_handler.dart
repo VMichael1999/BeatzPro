@@ -15,9 +15,10 @@ import '../ui/screens/Home/home_screen_controller.dart';
 import '/services/background_task.dart';
 import '/services/permission_service.dart';
 import '../utils/helper.dart';
-import '/models/hm_streaming_data.dart';
+import '/models/streaming_data.dart';
 import '/models/media_Item_builder.dart';
 import '/services/stream_service.dart';
+import '/services/yt_auth.dart';
 import '/services/utils.dart';
 import '../ui/screens/Settings/settings_screen_controller.dart';
 import '../ui/screens/Library/library_controller.dart';
@@ -368,8 +369,11 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   AudioSource _createAudioSource(MediaItem mediaItem) {
     final url = mediaItem.extras!['url'] as String;
+    // HLS playlists can't be cached through LockCachingAudioSource
+    final isHls = url.contains('.m3u8');
     if (url.contains('/cache') ||
-        (Get.find<SettingsScreenController>().cacheSongs.isTrue &&
+        (!isHls &&
+            Get.find<SettingsScreenController>().cacheSongs.isTrue &&
             url.contains("http"))) {
       printINFO("Playing Using LockCaching");
       isPlayingUsingLockCachingSource = true;
@@ -459,6 +463,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
   @override
   Future<void> skipToNext() async {
+    if (currentIndex == null) return;
     if (queue.value.length > currentIndex + 1) {
       _player.seek(Duration.zero);
       await customAction("playByIndex", {'index': currentIndex + 1});
@@ -510,9 +515,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       if (!streamInfo.playable || audio == null) {
         currentSongUrl = null;
         isSongLoading = false;
-        final errorMessage = audio == null
-            ? "No compatible audio stream available"
-            : streamInfo.statusMSG;
+        final errorMessage = !streamInfo.playable
+            ? streamInfo.statusMSG
+            : "No compatible audio stream available";
         printERROR(errorMessage);
         playbackState.add(playbackState.value.copyWith(
             processingState: AudioProcessingState.error,
@@ -579,9 +584,9 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       if (!streamInfo.playable || audio == null) {
         currentSongUrl = null;
         isSongLoading = false;
-        final errorMessage = audio == null
-            ? "No compatible audio stream available"
-            : streamInfo.statusMSG;
+        final errorMessage = !streamInfo.playable
+            ? streamInfo.statusMSG
+            : "No compatible audio stream available";
         printERROR(errorMessage);
         playbackState.add(playbackState.value.copyWith(
             processingState: AudioProcessingState.error,
@@ -721,9 +726,11 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
           !(Hive.box("SongDownloads").containsKey(songId)) &&
           !(Hive.box("SongsCache").containsKey(songId))) {
         final token = RootIsolateToken.instance;
-        Future.sync(() => Isolate.run(() => getStreamInfo(songId, token!))
+        final cookies = YtAuth.cookies;
+        Future.sync(() => Isolate.run(
+                    () => getStreamInfo(songId, token!, cookies: cookies))
                 .then((value) async {
-              final streamInfo = HMStreamingData.fromJson(value);
+              final streamInfo = BeatzStreamingData.fromJson(value);
               if (streamInfo.playable) {
                 await Hive.box("SongsUrlCache").put(songId, value);
                 printWarning("Isolate: Next Song Url Cached song Id $songId");
@@ -734,7 +741,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
   }
 
 // Work around used [useNewInstanceOfExplode = false] to Fix Connection closed before full header was received issue
-  Future<HMStreamingData> checkNGetUrl(String songId,
+  Future<BeatzStreamingData> checkNGetUrl(String songId,
       {bool generateNewUrl = false, bool offlineReplacementUrl = false}) async {
     printINFO("Requested id : $songId");
     final songDownloadsBox = Hive.box("SongDownloads");
@@ -756,7 +763,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
             url: "file://$_cacheDir/cachedSongs/$songId.mp3",
             itag: 0);
       }
-      return HMStreamingData(
+      return BeatzStreamingData(
           playable: true,
           statusMSG: "OK",
           lowQualityAudio: cacheAudioPlaceholder,
@@ -778,7 +785,7 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
             url: path,
             size: 0);
       }
-      final streamInfo = HMStreamingData(
+      final streamInfo = BeatzStreamingData(
           playable: true,
           statusMSG: "OK",
           highQualityAudio: audio,
@@ -799,13 +806,13 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
       //check if song stream url is cached and allocate url accordingly
       final songsUrlCacheBox = Hive.box("SongsUrlCache");
       final qualityIndex = Hive.box('AppPrefs').get('streamingQuality') ?? 1;
-      HMStreamingData? streamInfo;
+      BeatzStreamingData? streamInfo;
       if (songsUrlCacheBox.containsKey(songId) && !generateNewUrl) {
         final streamInfoJson = songsUrlCacheBox.get(songId);
         if (streamInfoJson.runtimeType.toString().contains("Map") &&
             !isExpired(url: (streamInfoJson['lowQualityAudio']['url']))) {
           printINFO("Got cached Url ($songId)");
-          streamInfo = HMStreamingData.fromJson(streamInfoJson);
+          streamInfo = BeatzStreamingData.fromJson(streamInfoJson);
           if (streamInfo.audio == null) {
             streamInfo = null;
           }
@@ -814,9 +821,10 @@ class MyAudioHandler extends BaseAudioHandler with GetxServiceMixin {
 
       if (streamInfo == null) {
         final token = RootIsolateToken.instance;
-        final streamInfoJson =
-            await Isolate.run(() => getStreamInfo(songId, token));
-        streamInfo = HMStreamingData.fromJson(streamInfoJson);
+        final cookies = YtAuth.cookies;
+        final streamInfoJson = await Isolate.run(
+            () => getStreamInfo(songId, token, cookies: cookies));
+        streamInfo = BeatzStreamingData.fromJson(streamInfoJson);
         if (streamInfo.playable) songsUrlCacheBox.put(songId, streamInfoJson);
       }
 
