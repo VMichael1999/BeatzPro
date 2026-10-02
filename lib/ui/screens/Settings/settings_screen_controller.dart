@@ -72,7 +72,9 @@ class SettingsScreenController extends GetxController {
 
   Future<void> _setInitValue() async {
     currentAppLanguageCode.value = setBox.get('currentAppLanguageCode') ?? "en";
-    isBottomNavBarEnabled.value = setBox.get("isBottomNavBarEnabled") ?? false;
+    // Phones always use the bottom bar of the redesign; the side bar is for
+    // desktop only.
+    isBottomNavBarEnabled.value = !GetPlatform.isDesktop;
     noOfHomeScreenContent.value = setBox.get("noOfHomeScreenContent") ?? 3;
     isTransitionAnimationDisabled.value =
         setBox.get("isTransitionAnimationDisabled") ?? false;

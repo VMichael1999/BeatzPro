@@ -3,6 +3,8 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../utils/beatz_design.dart';
+
 enum OperationMode { arrange, delete, addToPlaylist, none }
 
 enum SortType {
@@ -86,7 +88,7 @@ class SortWidget extends StatelessWidget {
                       Icon(
                         Icons.music_note_rounded,
                         size: 15,
-                        color: Theme.of(context).colorScheme.secondary,
+                        color: context.beatz.muted,
                       )
                   ],
                 ),
@@ -94,8 +96,8 @@ class SortWidget extends StatelessWidget {
               Obx(
                 () => IconButton(
                   color: controller.sortType.value == SortType.Name
-                      ? Theme.of(context).textTheme.bodySmall!.color
-                      : Theme.of(context).colorScheme.secondary,
+                      ? context.beatz.ink
+                      : context.beatz.muted,
                   icon: const Icon(Icons.sort_by_alpha_rounded),
                   iconSize: 20,
                   splashRadius: 20,
@@ -109,8 +111,8 @@ class SortWidget extends StatelessWidget {
               requiredSortTypes.contains(SortType.Date)
                   ? Obx(() => IconButton(
                         color: controller.sortType.value == SortType.Date
-                            ? Theme.of(context).textTheme.bodySmall!.color
-                            : Theme.of(context).colorScheme.secondary,
+                            ? context.beatz.ink
+                            : context.beatz.muted,
                         icon: const Icon(Icons.calendar_month_rounded),
                         iconSize: 20,
                         splashRadius: 20,
@@ -124,8 +126,8 @@ class SortWidget extends StatelessWidget {
               requiredSortTypes.contains(SortType.Duration)
                   ? Obx(() => IconButton(
                         color: controller.sortType.value == SortType.Duration
-                            ? Theme.of(context).textTheme.bodySmall!.color
-                            : Theme.of(context).colorScheme.secondary,
+                            ? context.beatz.ink
+                            : context.beatz.muted,
                         icon: const Icon(Icons.timer_rounded),
                         iconSize: 20,
                         splashRadius: 20,
@@ -209,14 +211,14 @@ class SortWidget extends StatelessWidget {
                 onChanged: (value) {
                   onSearch!(value, tag);
                 },
-                cursorColor: Theme.of(context).textTheme.titleSmall!.color,
+                cursorColor: context.beatz.ink,
                 decoration: InputDecoration(
                     isDense: true,
                     contentPadding: const EdgeInsets.all(8),
                     filled: true,
                     border: const OutlineInputBorder(),
                     hintText: "search".tr,
-                    suffixIconColor: Theme.of(context).colorScheme.secondary,
+                    suffixIconColor: context.beatz.muted,
                     suffixIcon: IconButton(
                       splashRadius: 10,
                       iconSize: 20,

@@ -1,0 +1,38 @@
+// GENERATED from the icon symbols of Rediseño BeatzPro.html
+// ignore_for_file: constant_identifier_names
+
+/// Inner SVG markup (24x24, stroke based) of each design icon.
+const Map<String, String> kBeatzIconMarkup = {
+  'home': '<path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1z"/>',
+  'search': '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',
+  'lib': '<path d="M5 4v16M10 4v16M15 5l4 15"/>',
+  'gear': '<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>',
+  'play': '<path d="M8 5.5v13a1 1 0 0 0 1.5.9l10.4-6.5a1 1 0 0 0 0-1.8L9.5 4.6A1 1 0 0 0 8 5.5z"/>',
+  'pause': '<rect x="6.5" y="5" width="4" height="14" rx="1.2"/><rect x="13.5" y="5" width="4" height="14" rx="1.2"/>',
+  'next': '<path d="M6 6.5v11a.8.8 0 0 0 1.2.7l8.4-5.5a.8.8 0 0 0 0-1.4L7.2 5.8A.8.8 0 0 0 6 6.5z"/><rect x="16.5" y="5.5" width="2.5" height="13" rx="1"/>',
+  'prev': '<path d="M18 6.5v11a.8.8 0 0 1-1.2.7l-8.4-5.5a.8.8 0 0 1 0-1.4l8.4-5.5a.8.8 0 0 1 1.2.7z"/><rect x="5" y="5.5" width="2.5" height="13" rx="1"/>',
+  'shuffle': '<path d="M3 7h3.5c4 0 5.5 10 10 10H21M3 17h3.5c1.6 0 2.8-1.4 3.8-3.2M14 7.8C14.8 7.3 15.6 7 16.5 7H21M18 4l3 3-3 3M18 14l3 3-3 3"/>',
+  'repeat': '<path d="M4 11V9a3 3 0 0 1 3-3h13M17 3l3 3-3 3M20 13v2a3 3 0 0 1-3 3H4M7 21l-3-3 3-3"/>',
+  'heart': '<path d="M12 20s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.3 4.3 4.3 0 0 1 19.5 10c0 5.4-7.5 10-7.5 10z"/>',
+  'down': '<path d="M6 9l6 6 6-6"/>',
+  'back': '<path d="M15 6l-6 6 6 6"/>',
+  'more': '<circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/>',
+  'dl': '<path d="M12 4v11M7 10l5 5 5-5M5 20h14"/>',
+  'check': '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  'x': '<path d="M6 6l12 12M18 6L6 18"/>',
+  'moon': '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
+  'eq': '<path d="M6 4v16M12 4v16M18 4v16"/><circle cx="6" cy="14" r="2" fill="currentColor"/><circle cx="12" cy="8" r="2" fill="currentColor"/><circle cx="18" cy="15" r="2" fill="currentColor"/>',
+  'grip': '<path d="M5 9h14M5 15h14"/>',
+  'radio': '<circle cx="12" cy="12" r="2"/><path d="M8.5 15.5a5 5 0 0 1 0-7M15.5 8.5a5 5 0 0 1 0 7M5.6 18.4a9 9 0 0 1 0-12.8M18.4 5.6a9 9 0 0 1 0 12.8"/>',
+  'plus': '<path d="M12 5v14M5 12h14"/>',
+  'chev': '<path d="M9 6l6 6-6 6"/>',
+  'wave': '<path d="M3 12h2M7 8v8M11 5v14M15 9v6M19 11v2"/>',
+  'hq': '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M7 9v6M7 12h3M10 9v6M14 9h2a2 2 0 0 1 2 2v2a2 2 0 0 1-2 2h-2z"/>',
+  'palette': '<path d="M12 3a9 9 0 0 0 0 18c1.2 0 2-.8 2-1.8 0-1.3-1.2-1.6-1.2-2.8 0-1 .8-1.6 1.8-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/>',
+  'lang': '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 3.5 5.5 3.5 9s-1 6.5-3.5 9c-2.5-2.5-3.5-5.5-3.5-9S9.5 5.5 12 3z"/>',
+  'info': '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>',
+  'db': '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v12c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12c0 1.7 3.1 3 7 3s7-1.3 7-3"/>',
+  'vol': '<path d="M4 9h4l5-4v14l-5-4H4z"/><path d="M16.5 9a4 4 0 0 1 0 6"/>',
+  'queue': '<path d="M4 6h12M4 12h12M4 18h7M17 15v6l4-3z"/>',
+  'mic': '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/>',
+};

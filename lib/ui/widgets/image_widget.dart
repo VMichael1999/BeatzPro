@@ -20,6 +20,7 @@ class ImageWidget extends StatelessWidget {
     this.artist,
     required this.size,
     this.isPlayerArtImage = false,
+    this.radius = 10,
   });
   final MediaItem? song;
   final Playlist? playlist;
@@ -27,6 +28,9 @@ class ImageWidget extends StatelessWidget {
   final bool isPlayerArtImage;
   final Artist? artist;
   final double size;
+
+  /// Corner radius of rectangular covers (artists are always circular).
+  final double radius;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +70,7 @@ class ImageWidget extends StatelessWidget {
             clipBehavior: Clip.antiAlias,
             decoration: BoxDecoration(
               shape: artist != null ? BoxShape.circle : BoxShape.rectangle,
-              borderRadius: artist != null ? null : BorderRadius.circular(5),
+              borderRadius: artist != null ? null : BorderRadius.circular(radius),
             ),
             child: CachedNetworkImage(
               height: size,
@@ -94,8 +98,8 @@ class ImageWidget extends StatelessWidget {
                 return _fallbackImage(context);
               },
               progressIndicatorBuilder: ((_, __, ___) => Shimmer.fromColors(
-                  baseColor: Colors.grey[500]!,
-                  highlightColor: Colors.grey[300]!,
+                  baseColor: Theme.of(context).colorScheme.secondary,
+                  highlightColor: Theme.of(context).primaryColorLight,
                   enabled: true,
                   direction: ShimmerDirection.ltr,
                   child: Container(
@@ -103,8 +107,8 @@ class ImageWidget extends StatelessWidget {
                       shape:
                           artist != null ? BoxShape.circle : BoxShape.rectangle,
                       borderRadius:
-                          artist != null ? null : BorderRadius.circular(10),
-                      color: Colors.white54,
+                          artist != null ? null : BorderRadius.circular(radius),
+                      color: Colors.white,
                     ),
                   ))),
             ),
@@ -120,7 +124,7 @@ class ImageWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.secondary,
         shape: artist != null ? BoxShape.circle : BoxShape.rectangle,
-        borderRadius: artist != null ? null : BorderRadius.circular(10),
+        borderRadius: artist != null ? null : BorderRadius.circular(radius),
       ),
       child: Image.asset(
           "assets/icons/${song != null ? "song" : artist != null ? "artist" : "album"}.png"),
