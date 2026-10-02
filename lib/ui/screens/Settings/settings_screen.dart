@@ -11,6 +11,8 @@ import '../../widgets/restore_dialog.dart';
 import '../Library/library_controller.dart';
 import '../../widgets/snackbar.dart';
 import '/ui/widgets/link_piped.dart';
+import '/services/yt_auth.dart';
+import 'youtube_login_screen.dart';
 import '/services/music_service.dart';
 import '/ui/player/player_controller.dart';
 import '/ui/utils/theme_controller.dart';
@@ -366,6 +368,7 @@ class SettingsScreen extends StatelessWidget {
                     }
                   },
                 ),
+              const _YoutubeLoginTile(),
               Visibility(
                 visible: false,
                 child: ListTile(
@@ -680,4 +683,42 @@ Widget radioWidget(
                 : controller.onContentChange),
         title: Text(label),
       ));
+}
+
+
+class _YoutubeLoginTile extends StatefulWidget {
+  const _YoutubeLoginTile();
+
+  @override
+  State<_YoutubeLoginTile> createState() => _YoutubeLoginTileState();
+}
+
+class _YoutubeLoginTileState extends State<_YoutubeLoginTile> {
+  @override
+  Widget build(BuildContext context) {
+    final loggedIn = YtAuth.isLoggedIn;
+    return ListTile(
+      contentPadding: const EdgeInsets.only(left: 5, right: 10, top: 0),
+      title: const Text("Cuenta de YouTube"),
+      subtitle: Text(
+          loggedIn
+              ? "Sesión iniciada. Se usa para poder reproducir canciones."
+              : "Inicia sesión para poder reproducir canciones.",
+          style: Theme.of(context).textTheme.bodyMedium),
+      trailing: TextButton(
+        child: Text(loggedIn ? "Cerrar sesión" : "Iniciar sesión",
+            style:
+                Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 15)),
+        onPressed: () async {
+          if (loggedIn) {
+            await YtAuth.clear();
+          } else {
+            await Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => const YoutubeLoginScreen()));
+          }
+          if (mounted) setState(() {});
+        },
+      ),
+    );
+  }
 }
