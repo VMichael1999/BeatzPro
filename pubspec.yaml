@@ -41,10 +41,11 @@ dependencies:
   #http: ^0.13.5
   dio: ^5.3.3
   cached_network_image: ^3.3.1
-  youtube_explode_dart:
-    git:
-      url: https://github.com/anandnet/youtube_explode_dart.git
-      ref: 1d9ec9baa806705b1d859260eeb389ec28c6b024
+  youtube_explode_dart: ^3.1.0
+  flutter_inappwebview: ^6.0.0
+  crypto: ^3.0.3
+  flutter_svg: ^2.0.10
+  http: ^1.2.0
   audio_service: ^0.18.13
   palette_generator: ^0.3.3+3
   path_provider: ^2.1.1
