@@ -117,7 +117,7 @@ class RestoreDialogController extends GetxController {
         .pickFiles(
             dialogTitle: "Select backup file",
             type: FileType.custom,
-            allowedExtensions: ['hmb'],
+            allowedExtensions: ['bpb', 'hmb'],
             allowMultiple: false);
 
     final String? pickedFile = pickedFileResult?.files.first.path;

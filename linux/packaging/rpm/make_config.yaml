@@ -1,10 +1,10 @@
 icon: assets/icons/icon.png
 summary: An application to stream Music
 group: Application/Multimedia
-vendor: anandnet
-packager: anandnet
+vendor: VMichael1999
+packager: VMichael1999
 license: GPLv3
-url: https://github.com/anandnet/BeatzPro
+url: https://github.com/VMichael1999/BeatzPro
 
 requires:
   - mpv

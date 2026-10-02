@@ -2,10 +2,10 @@
 AppId=B9F6E402-0CAE-4045-BDE6-14BD6C39C4EA
 AppVersion=1.9.2+15
 AppName=BeatzPro
-AppPublisher=anandnet
-AppPublisherURL=https://github.com/anandnet/BeatzPro
-AppSupportURL=https://github.com/anandnet/BeatzPro
-AppUpdatesURL=https://github.com/anandnet/BeatzPro
+AppPublisher=VMichael1999
+AppPublisherURL=https://github.com/VMichael1999/BeatzPro
+AppSupportURL=https://github.com/VMichael1999/BeatzPro
+AppUpdatesURL=https://github.com/VMichael1999/BeatzPro
 DefaultDirName={autopf}\beatzpro
 DisableProgramGroupPage=yes
 OutputDir=.

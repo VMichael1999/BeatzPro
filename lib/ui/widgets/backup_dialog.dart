@@ -156,7 +156,7 @@ class BackupDialogController extends GetxController {
 
     var encoder = ZipFileEncoder();
     encoder.create(
-        '$exportDirPath/${DateTime.now().millisecondsSinceEpoch.toString()}.hmb');
+        '$exportDirPath/${DateTime.now().millisecondsSinceEpoch.toString()}.bpb');
     final length_ = filesToExport.length;
     for (int i = 0; i < length_; i++) {
       final filePath = filesToExport[i];
