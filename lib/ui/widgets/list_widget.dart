@@ -1,15 +1,20 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:hive/hive.dart';
 
-import '/ui/widgets/marqwee_widget.dart';
 import '../../models/playlist.dart';
 import '../navigator.dart';
 import '../player/player_controller.dart';
+import '../utils/beatz_design.dart';
+import 'beatz/beatz_icon.dart';
+import 'beatz/beatz_widgets.dart';
+import 'beatz/eq_bars.dart';
 import 'image_widget.dart';
 import 'songinfo_bottom_sheet.dart';
-import 'package:mini_music_visualizer/mini_music_visualizer.dart';
 
+/// Lists of songs, videos, playlists, albums and artists (search, library,
+/// album/playlist and artist screens), drawn with the rows of the redesign.
 class ListWidget extends StatelessWidget {
   const ListWidget(this.items, this.title, this.isCompleteList,
       {super.key,
@@ -27,6 +32,9 @@ class ListWidget extends StatelessWidget {
   final bool isPlaylist;
   final Playlist? playlist;
 
+  static const _songRowHeight = 62.0;
+  static const _libraryRowHeight = 70.0;
+
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
@@ -34,7 +42,7 @@ class ListWidget extends StatelessWidget {
         child: Center(
           child: Text(
             "No ${title.toLowerCase().tr}!",
-            style: Theme.of(context).textTheme.titleSmall,
+            style: TextStyle(color: context.beatz.muted),
           ),
         ),
       );
@@ -47,7 +55,7 @@ class ListWidget extends StatelessWidget {
                   sc: scrollController,
                   isArtistSongs: isArtistSongs))
           : SizedBox(
-              height: items.length * 75.0,
+              height: items.length * _songRowHeight,
               child: listViewSongVid(items),
             );
     } else if (title.contains("playlists")) {
@@ -57,12 +65,19 @@ class ListWidget extends StatelessWidget {
     } else if (title.contains('Artists')) {
       return isCompleteList
           ? Expanded(child: listViewArtists(items, sc: scrollController))
-          : SizedBox(
-              height: items.length * 95.0,
-              child: listViewArtists(items),
-            );
+          : artistGrid(context, items);
     }
     return const SizedBox.shrink();
+  }
+
+  void _openInfo(PlayerController controller, MediaItem song) {
+    showModalBottomSheet(
+      constraints: const BoxConstraints(maxWidth: 500),
+      isScrollControlled: true,
+      context: controller.homeScaffoldkey.currentState!.context,
+      barrierColor: Colors.transparent.withAlpha(100),
+      builder: (context) => SongInfoBottomSheet(song, playlist: playlist),
+    ).whenComplete(() => Get.delete<SongInfoController>());
   }
 
   Widget listViewSongVid(List<dynamic> items,
@@ -70,12 +85,8 @@ class ListWidget extends StatelessWidget {
       Playlist? playlist,
       bool isArtistSongs = false,
       ScrollController? sc}) {
-    final playerController = Get.find<PlayerController>();
     return ListView.builder(
-      padding: const EdgeInsets.only(
-        bottom: 200,
-        top: 0,
-      ),
+      padding: const EdgeInsets.only(bottom: 120, top: 0),
       addRepaintBoundaries: false,
       addAutomaticKeepAlives: false,
       controller: sc,
@@ -83,214 +94,166 @@ class ListWidget extends StatelessWidget {
       physics: isCompleteList
           ? const BouncingScrollPhysics()
           : const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => ListTile(
-        onTap: () {
-          (isPlaylist || isArtistSongs)
-              ? playerController.playPlayListSong(
-                  List<MediaItem>.from(items), index)
-              : playerController.pushSongToQueue(items[index] as MediaItem);
-        },
-        onLongPress: () async {
-          showModalBottomSheet(
-            constraints: const BoxConstraints(maxWidth: 500),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(10.0)),
-            ),
-            isScrollControlled: true,
-            context: playerController.homeScaffoldkey.currentState!.context,
-            //constraints: BoxConstraints(maxHeight:Get.height),
-            barrierColor: Colors.transparent.withAlpha(100),
-            builder: (context) => SongInfoBottomSheet(
-              items[index] as MediaItem,
-              playlist: playlist,
-            ),
-          ).whenComplete(() => Get.delete<SongInfoController>());
-        },
-        contentPadding: const EdgeInsets.only(top: 0, left: 5, right: 30),
-        leading: ImageWidget(
-          size: 55,
-          song: items[index],
-        ),
-        title: MarqueeWidget(
-          child: Text(
-            items[index].title.length > 50
-                ? items[index].title.substring(0, 50)
-                : items[index].title,
-            maxLines: 1,
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ),
-        subtitle: Text(
-          "${items[index].artist}",
-          maxLines: 1,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-        trailing: SizedBox(
-          width: Get.size.width > 800 ? 80 : 58,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              // Column(
-              //   mainAxisAlignment: MainAxisAlignment.center,
-              //   children: [
-              //     if (isPlaylist)
-              //       Obx(() => playerController.currentSong.value?.id ==
-              //               items[index].id
-              //           ? const Icon(
-              //               Icons.equalizer_rounded,
-              //             )
-              //           : const SizedBox.shrink()),
-              //     Text(
-              //       items[index].extras!['length'] ?? "",
-              //       style: Theme.of(context).textTheme.titleSmall,
-              //     ),
-              //   ],
-              // ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  if (isPlaylist)
-                    Obx(() => playerController.currentSong.value?.id ==
-                            items[index].id
-                        ? MiniMusicVisualizer(
-                            color: Colors.red,
-                            radius: 20.0, // Radius of the visualizer circle
-                            animate: playerController.buttonState.value ==
-                                PlayButtonState.playing,
-                          )
-                        : const SizedBox.shrink()),
-                  Text(
-                    items[index].extras!['length'] ?? "",
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
-                ],
-              ),
-
-              if (GetPlatform.isDesktop)
-                IconButton(
-                    splashRadius: 20,
-                    onPressed: () {
-                      showModalBottomSheet(
-                        constraints: const BoxConstraints(maxWidth: 500),
-                        shape: const RoundedRectangleBorder(
-                          borderRadius:
-                              BorderRadius.vertical(top: Radius.circular(10.0)),
-                        ),
-                        isScrollControlled: true,
-                        context: playerController
-                            .homeScaffoldkey.currentState!.context,
-                        //constraints: BoxConstraints(maxHeight:Get.height),
-                        barrierColor: Colors.transparent.withAlpha(100),
-                        builder: (context) => SongInfoBottomSheet(
-                          items[index] as MediaItem,
-                          playlist: playlist,
-                        ),
-                      ).whenComplete(() => Get.delete<SongInfoController>());
-                    },
-                    icon: const Icon(Icons.more_vert))
-            ],
-          ),
-        ),
-      ),
+      itemBuilder: (context, index) => songRow(context, items, index),
     );
+  }
+
+  /// One song row; also used by screens that scroll the list together with a
+  /// header (album / playlist).
+  Widget songRow(BuildContext context, List<dynamic> items, int index,
+      {bool? isPlaylistOverride}) {
+    final playerController = Get.find<PlayerController>();
+    final isPlaylist = isPlaylistOverride ?? this.isPlaylist;
+    final colors = context.beatz;
+    final song = items[index] as MediaItem;
+    final downloaded = Hive.box("SongDownloads").containsKey(song.id);
+    final length = (song.extras?['length'] ?? "").toString();
+    Widget row(bool isCurrent) => BeatzSongRow(
+          cover: ImageWidget(size: 44, song: song, radius: 8),
+          title: song.title,
+          subtitle: "${song.artist ?? ''}",
+          subtitleLeading: downloaded ? const DownloadedBadge() : null,
+          leadingTitle: isCurrent
+              ? EqBars(
+                  animate: playerController.buttonState.value ==
+                      PlayButtonState.playing)
+              : null,
+          onTap: () {
+            (isPlaylist || isArtistSongs)
+                ? playerController.playPlayListSong(
+                    List<MediaItem>.from(items), index)
+                : playerController.pushSongToQueue(song);
+          },
+          onLongPress: () => _openInfo(playerController, song),
+          end: isPlaylist
+              ? Text(length,
+                  maxLines: 1,
+                  style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      color: colors.muted,
+                      fontFeatures: const [FontFeature.tabularFigures()]))
+              : BeatzIconButton(
+                  icon: 'more',
+                  tooltip: 'Más opciones',
+                  color: colors.muted,
+                  onPressed: () => _openInfo(playerController, song),
+                ),
+        );
+
+    // only lists that mark the playing song observe the player
+    if (!isPlaylist) return row(false);
+    return Obx(() => row(playerController.currentSong.value?.id == song.id));
   }
 
   Widget listViewPlaylists(List<dynamic> playlists, {ScrollController? sc}) {
     return Expanded(
       child: ListView.builder(
-          padding: const EdgeInsets.only(
-            bottom: 210,
-            top: 0,
-          ),
+          padding: const EdgeInsets.only(bottom: 120, top: 0),
           controller: sc,
           itemCount: playlists.length,
-          itemExtent: 120,
+          itemExtent: _libraryRowHeight,
           physics: const BouncingScrollPhysics(),
-          itemBuilder: (context, index) => wideListTile(context,
+          itemBuilder: (context, index) => libraryRow(context,
               playlist: playlists[index],
               title: playlists[index].title,
-              subtitle: playlists[index]?.description ?? "NA",
-              subtitle2: "")),
+              subtitle: playlists[index]?.description ?? "NA")),
     );
   }
 
   Widget listViewAlbums(List<dynamic> albums, {ScrollController? sc}) {
     return Expanded(
       child: ListView.builder(
-          padding: const EdgeInsets.only(
-            bottom: 210,
-            top: 0,
-          ),
+          padding: const EdgeInsets.only(bottom: 120, top: 0),
           controller: sc,
           itemCount: albums.length,
-          itemExtent: 120,
+          itemExtent: _libraryRowHeight,
           physics: const BouncingScrollPhysics(),
           itemBuilder: (context, index) {
-            String artistName = "";
-            for (dynamic items in (albums[index].artists).sublist(1)) {
-              artistName = "${artistName + items['name']},";
-            }
-            artistName = artistName.length > 16
-                ? artistName.substring(0, 16)
-                : artistName;
-            return wideListTile(context,
+            return libraryRow(context,
                 album: albums[index],
                 title: albums[index].title,
-                subtitle: artistName,
-                subtitle2:
-                    "${(albums[index].artists[0]['name'])} • ${albums[index].year}");
+                subtitle:
+                    "${(albums[index].artists[0]['name'])} · ${albums[index].year}");
           }),
     );
   }
 
   Widget listViewArtists(List<dynamic> artists, {ScrollController? sc}) {
     return ListView.builder(
-      padding: const EdgeInsets.only(
-        bottom: 200,
-        top: 5,
-      ),
+      padding: const EdgeInsets.only(bottom: 120, top: 5),
       controller: sc,
       itemCount: artists.length,
-      itemExtent: 90,
+      itemExtent: _libraryRowHeight,
       physics: isCompleteList
           ? const BouncingScrollPhysics()
           : const NeverScrollableScrollPhysics(),
-      itemBuilder: (context, index) => ListTile(
-        visualDensity: const VisualDensity(horizontal: -2, vertical: 2),
-        onTap: () {
-          Get.toNamed(ScreenNavigationSetup.artistScreen,
-              id: ScreenNavigationSetup.id, arguments: [false, artists[index]]);
-        },
-        contentPadding: const EdgeInsets.only(top: 0, bottom: 0, left: 5),
-        leading: ImageWidget(
-          size: 90,
+      itemBuilder: (context, index) => libraryRow(context,
           artist: artists[index],
-        ),
-        title: Text(
-          artists[index].name,
-          maxLines: 1,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        subtitle: Text(
-          artists[index].subscribers,
-          maxLines: 2,
-          style: Theme.of(context).textTheme.titleSmall,
-        ),
-      ),
+          title: artists[index].name,
+          subtitle: "${artists[index].subscribers}"),
     );
   }
 
-  Widget wideListTile(BuildContext context,
+  /// Three circular artists in a row (`.art` in the design).
+  Widget artistGrid(BuildContext context, List<dynamic> artists) {
+    final colors = context.beatz;
+    final shown = artists.take(3).toList();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        for (var i = 0; i < 3; i++) ...[
+          if (i > 0) const SizedBox(width: 10),
+          Expanded(
+            child: i >= shown.length
+                ? const SizedBox.shrink()
+                : InkWell(
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () => Get.toNamed(ScreenNavigationSetup.artistScreen,
+                        id: ScreenNavigationSetup.id,
+                        arguments: [false, shown[i]]),
+                    child: Column(
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, c) => ImageWidget(
+                              size: c.maxWidth, artist: shown[i]),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(shown[i].name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: colors.ink)),
+                        Text('Artista',
+                            style: TextStyle(
+                                fontSize: 11.5, color: colors.muted)),
+                      ],
+                    ),
+                  ),
+          ),
+        ],
+      ],
+    );
+  }
+
+  /// Library row (`.li`): 56 px cover, title, detail line and a chevron.
+  Widget libraryRow(BuildContext context,
       {dynamic album,
       dynamic playlist,
+      dynamic artist,
       required String title,
-      required String subtitle,
-      required String subtitle2}) {
+      required String subtitle}) {
+    final colors = context.beatz;
     return InkWell(
+      borderRadius: BorderRadius.circular(10),
       onTap: () {
-        if (album != null) {
+        if (artist != null) {
+          Get.toNamed(ScreenNavigationSetup.artistScreen,
+              id: ScreenNavigationSetup.id, arguments: [false, artist]);
+        } else if (album != null) {
           Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
               id: ScreenNavigationSetup.id, arguments: [true, album, false]);
         } else {
@@ -299,47 +262,34 @@ class ListWidget extends StatelessWidget {
               arguments: [false, playlist, false]);
         }
       },
-      child: SizedBox(
-        height: 120,
-        child: Padding(
-          padding: const EdgeInsets.only(top: 10.0, bottom: 10),
-          child: Row(
-            children: [
-              ImageWidget(
-                size: 100,
-                album: album,
-                playlist: playlist,
-              ),
-              const SizedBox(
-                width: 20,
-              ),
-              Expanded(
-                  child: Padding(
-                padding: const EdgeInsets.only(right: 10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                    Text(
-                      subtitle2,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          children: [
+            ImageWidget(
+                size: 56, album: album, playlist: playlist, artist: artist),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
                       maxLines: 1,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
-                  ],
-                ),
-              ))
-            ],
-          ),
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                          color: colors.ink)),
+                  Text(subtitle,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(fontSize: 12.5, color: colors.muted)),
+                ],
+              ),
+            ),
+            BeatzIcon('chev', color: colors.muted),
+          ],
         ),
       ),
     );

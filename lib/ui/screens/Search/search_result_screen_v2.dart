@@ -1,175 +1,148 @@
-import 'package:buttons_tabbar/buttons_tabbar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:beatzpro/ui/widgets/loader.dart';
 import 'package:beatzpro/ui/widgets/search_related_widgets.dart';
 
 import '../../navigator.dart';
+import '../../utils/beatz_design.dart';
+import '../../widgets/beatz/beatz_widgets.dart';
 import '../../widgets/separate_tab_item_widget.dart';
 import 'search_result_screen_controller.dart';
 
-class SearchResultScreenBN extends StatelessWidget {
+class SearchResultScreenBN extends StatefulWidget {
   const SearchResultScreenBN({super.key});
 
   @override
+  State<SearchResultScreenBN> createState() => _SearchResultScreenBNState();
+}
+
+class _SearchResultScreenBNState extends State<SearchResultScreenBN> {
+  final _controller = Get.find<SearchResultScreenController>();
+  late final TextEditingController _field =
+      TextEditingController(text: _controller.queryString.value);
+  Worker? _queryWorker;
+
+  @override
+  void initState() {
+    super.initState();
+    // the query arrives after the screen is built
+    _queryWorker =
+        ever<String>(_controller.queryString, (value) => _field.text = value);
+  }
+
+  @override
+  void dispose() {
+    _queryWorker?.dispose();
+    _field.dispose();
+    super.dispose();
+  }
+
+  void _back() => Get.nestedKey(ScreenNavigationSetup.id)!.currentState!.pop();
+
+  @override
   Widget build(BuildContext context) {
-    final SearchResultScreenController searchResScrController =
-        Get.find<SearchResultScreenController>();
+    final colors = context.beatz;
     return Scaffold(
-      body: Padding(
-          padding: const EdgeInsets.only(
-            top: 85,
-          ),
+      body: SafeArea(
+        bottom: false,
+        child: Padding(
+          padding: const EdgeInsets.only(top: 14),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  SizedBox(
-                    width: 55,
-                    child: Center(
-                      child: IconButton(
-                        onPressed: () {
-                          Get.nestedKey(ScreenNavigationSetup.id)!
-                              .currentState!
-                              .pop();
-                        },
-                        icon: const Icon(Icons.arrow_back_ios_new),
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                      child: Column(children: [
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        "searchRes".tr,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
-                    ),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Obx(
-                        () => Text(
-                          "${"for1".tr} \"${searchResScrController.queryString.value}\"",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    ),
-                  ]))
-                ],
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 18),
+                child: BeatzSearchField(
+                  controller: _field,
+                  hint: "searchDes".tr,
+                  readOnly: true,
+                  onTap: _back,
+                  onClear: _back,
+                ),
               ),
               Expanded(
-                child: Obx(
-                  () {
-                    if (searchResScrController.isResultContentFetced.isTrue &&
-                        searchResScrController.railItems.isEmpty) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              "nomatch".tr,
-                              style: Theme.of(context).textTheme.titleMedium,
+                child: Obx(() {
+                  if (_controller.isResultContentFetced.isTrue &&
+                      _controller.railItems.isEmpty) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text("nomatch".tr,
+                              style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: colors.ink)),
+                          Text("'${_controller.queryString.value}'",
+                              style: TextStyle(color: colors.muted)),
+                        ],
+                      ),
+                    );
+                  } else if (_controller.isResultContentFetced.isTrue) {
+                    final tabController = _controller.tabController!;
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Padding(
+                          padding: const EdgeInsets.only(left: 18, top: 6),
+                          child: AnimatedBuilder(
+                            animation: tabController.animation!,
+                            builder: (context, _) => BeatzChips(
+                              labels: [
+                                "results".tr,
+                                ..._controller.railItems.map((item) =>
+                                    item.toLowerCase().removeAllWhitespace.tr)
+                              ],
+                              selected: _controller
+                                  .navigationRailCurrentIndex.value,
+                              onSelected: (i) =>
+                                  _controller.onDestinationSelected(i),
                             ),
-                            Text(
-                                "'${searchResScrController.queryString.value}'"),
-                          ],
+                          ),
                         ),
-                      );
-                    } else if (searchResScrController
-                        .isResultContentFetced.isTrue) {
-                      return Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Padding(
-                            padding: const EdgeInsets.only(left: 15.0, top: 10),
-                            child: ButtonsTabBar(
-                              onTap:
-                                  searchResScrController.onDestinationSelected,
-
-                              controller: searchResScrController.tabController,
-                              contentPadding:
-                                  const EdgeInsets.only(left: 15, right: 15),
-                              backgroundColor:
-                                  Theme.of(context).textTheme.titleMedium?.color!,
-                              unselectedBackgroundColor:  Theme.of(context).colorScheme.secondary,
-                              borderWidth: 0,
-                              buttonMargin: const EdgeInsets.only(
-                                  right: 10, left: 4, top: 4, bottom: 4),
-                              borderColor: Colors.black,
-                              labelStyle: TextStyle(
-                                color: Theme.of(context).primaryColor,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              unselectedLabelStyle: TextStyle(
-                                color: Theme.of(context)
-                                    .textTheme
-                                    .titleMedium
-                                    ?.color!,
-                                fontWeight: FontWeight.bold,
-                              ),
-                              // Add your tabs here
-                              tabs: [
-                                Tab(text: "results".tr),
-                                ...searchResScrController.railItems
-                                    .map((item) => Tab(
-                                          text: item
-                                              .toLowerCase()
-                                              .removeAllWhitespace
-                                              .tr,
-                                        ))
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 18),
+                            child: TabBarView(
+                              controller: tabController,
+                              children: [
+                                const ResultWidget(isv2Used: true),
+                                ..._controller.railItems.map((tabName) {
+                                  if (tabName == "Songs" ||
+                                      tabName == "Videos") {
+                                    return SeparateTabItemWidget(
+                                      isResultWidget: true,
+                                      hideTitle: true,
+                                      items: const [],
+                                      title: tabName,
+                                      isCompleteList: true,
+                                      scrollController: _controller
+                                          .scrollControllers[tabName],
+                                    );
+                                  } else {
+                                    return SeparateTabItemWidget(
+                                      title: tabName,
+                                      hideTitle: true,
+                                      items: const [],
+                                      scrollController:
+                                          _controller.scrollControllers[tabName],
+                                    );
+                                  }
+                                }),
                               ],
                             ),
                           ),
-                          Expanded(
-                            child: Padding(
-                              padding: const EdgeInsets.only(left: 15.0),
-                              child: TabBarView(
-                                controller:
-                                    searchResScrController.tabController,
-                                children: [
-                                  const ResultWidget(
-                                    isv2Used: true,
-                                  ),
-                                  ...searchResScrController.railItems
-                                      .map((tabName) {
-                                    if (tabName == "Songs" ||
-                                        tabName == "Videos") {
-                                      return SeparateTabItemWidget(
-                                        isResultWidget: true,
-                                        hideTitle: true,
-                                        items: const [],
-                                        title: tabName,
-                                        isCompleteList: true,
-                                        scrollController: searchResScrController
-                                            .scrollControllers[tabName],
-                                      );
-                                    } else {
-                                      return SeparateTabItemWidget(
-                                        title: tabName,
-                                        hideTitle: true,
-                                        items: const [],
-                                        scrollController: searchResScrController
-                                            .scrollControllers[tabName],
-                                      );
-                                    }
-                                  }),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ],
-                      );
-                    } else {
-                      return const Center(
-                        child: LoadingIndicator(),
-                      );
-                    }
-                  },
-                ),
+                        ),
+                      ],
+                    );
+                  } else {
+                    return const Center(child: LoadingIndicator());
+                  }
+                }),
               )
             ],
-          )),
+          ),
+        ),
+      ),
     );
   }
 }

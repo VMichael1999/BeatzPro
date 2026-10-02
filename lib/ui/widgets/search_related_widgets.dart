@@ -2,11 +2,15 @@ import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../player/player_controller.dart';
 import '../screens/Search/search_result_screen_controller.dart';
+import '../utils/beatz_design.dart';
 import '/models/album.dart';
 import '/models/artist.dart';
 import '/models/playlist.dart';
 import '/ui/widgets/content_list_widget.dart';
+import 'beatz/beatz_icon.dart';
+import 'image_widget.dart';
 import 'separate_tab_item_widget.dart';
 
 class ResultWidget extends StatelessWidget {
@@ -18,35 +22,104 @@ class ResultWidget extends StatelessWidget {
     final SearchResultScreenController searchResScrController =
         Get.find<SearchResultScreenController>();
     return Obx(
-      () => Center(
-        child: Padding(
-          padding: const EdgeInsets.all(0.0),
-          child: SingleChildScrollView(
-            padding: EdgeInsets.only(bottom: 200, top: isv2Used ? 0 : 70),
-            child: searchResScrController.isResultContentFetced.value
-                ? Column(children: [
-                    if (!isv2Used)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "searchRes".tr,
-                          style: Theme.of(context).textTheme.titleLarge,
+      () => SingleChildScrollView(
+        padding: EdgeInsets.only(bottom: 120, top: isv2Used ? 8 : 70),
+        child: searchResScrController.isResultContentFetced.value
+            ? Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                if (!isv2Used)
+                  Text(
+                    "searchRes".tr,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                if (!isv2Used)
+                  Text(
+                    "${"for1".tr} \"${searchResScrController.queryString.value}\"",
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                const SizedBox(height: 6),
+                _topResult(context, searchResScrController),
+                ...generateWidgetList(searchResScrController),
+              ])
+            : const SizedBox.shrink(),
+      ),
+    );
+  }
+
+  /// The first song of the results, big, with a play button.
+  Widget _topResult(BuildContext context, SearchResultScreenController c) {
+    final songs = c.resultContent["Songs"];
+    if (songs is! List || songs.isEmpty || songs.first is! MediaItem) {
+      return const SizedBox.shrink();
+    }
+    final song = songs.first as MediaItem;
+    final colors = context.beatz;
+    final player = Get.find<PlayerController>();
+    final details = [
+      song.artist,
+      if (song.album != null && song.album!.isNotEmpty) song.album,
+      song.extras?['length'],
+    ].where((e) => e != null && e.toString().isNotEmpty).join(' · ');
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 12),
+      child: Material(
+        color: colors.surface,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => player.pushSongToQueue(song),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ImageWidget(size: 84, song: song),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text('Resultado principal · Canción',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              color: colors.muted)),
+                      Text(song.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.2,
+                              color: colors.ink)),
+                      Text(details,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style:
+                              TextStyle(fontSize: 13, color: colors.muted)),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Tooltip(
+                  message: 'Reproducir ${song.title}',
+                  child: Material(
+                    color: colors.ink,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      customBorder: const CircleBorder(),
+                      onTap: () => player.pushSongToQueue(song),
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: Center(
+                          child: BeatzIcon('play',
+                              filled: true, color: colors.bg),
                         ),
                       ),
-                    if (!isv2Used)
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          "${"for1".tr} \"${searchResScrController.queryString.value}\"",
-                          style: Theme.of(context).textTheme.titleMedium,
-                        ),
-                      ),
-                    const SizedBox(
-                      height: 10,
                     ),
-                    ...generateWidgetList(searchResScrController),
-                  ])
-                : const SizedBox.shrink(),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

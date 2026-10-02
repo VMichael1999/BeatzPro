@@ -4,6 +4,7 @@ import 'package:beatzpro/ui/widgets/modification_list.dart';
 
 import '../screens/Artists/artist_screen_controller.dart';
 import '../screens/Search/search_result_screen_controller.dart';
+import 'beatz/beatz_widgets.dart';
 import 'list_widget.dart';
 import 'loader.dart';
 import 'sort_widget.dart';
@@ -40,29 +41,18 @@ class SeparateTabItemWidget extends StatelessWidget {
         ? Get.find<SearchResultScreenController>()
         : null;
     return Padding(
-      padding: EdgeInsets.only(top: topPadding, left: 5),
+      padding: EdgeInsets.only(top: topPadding),
       child: Column(
         children: [
           if (!hideTitle)
-            SizedBox(
-              height: 30,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    title.toLowerCase().removeAllWhitespace.tr,
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  isCompleteList
-                      ? const SizedBox.shrink()
-                      : TextButton(
-                          onPressed: () {
-                            searchResController!.viewAllCallback(title);
-                          },
-                          child: Text("viewAll".tr,
-                              style:
-                                  Theme.of(Get.context!).textTheme.titleSmall))
-                ],
+            Padding(
+              padding: const EdgeInsets.only(top: 9, bottom: 10),
+              child: BeatzSectionTitle(
+                title.toLowerCase().removeAllWhitespace.tr,
+                action: isCompleteList ? null : "viewAll".tr,
+                onAction: isCompleteList
+                    ? null
+                    : () => searchResController!.viewAllCallback(title),
               ),
             ),
           isCompleteList
