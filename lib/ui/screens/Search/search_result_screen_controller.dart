@@ -150,9 +150,6 @@ class SearchResultScreenController extends GetxController
     if (searchEndpoint is! Map) return;
 
     for (final tabName in railItems) {
-      if (tabName == "Artists") {
-        continue;
-      }
       final currentValue = resultContent[tabName];
       final hasItems = currentValue is List && currentValue.isNotEmpty;
       final filterParams = searchEndpoint[tabName];

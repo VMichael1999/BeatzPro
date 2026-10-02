@@ -41,6 +41,8 @@ class MediaItemBuilder {
           'resultType': json['resultType'],
           'category': json['category'],
           'videoType': json['videoType'],
+          'trackDetails': json['trackDetails'],
+          'year': json['year'],
         });
   }
 
@@ -83,6 +85,8 @@ class MediaItemBuilder {
         'resultType': mediaItem.extras?['resultType'],
         'category': mediaItem.extras?['category'],
         'videoType': mediaItem.extras?['videoType'],
+        'trackDetails': mediaItem.extras?['trackDetails'],
+        'year': mediaItem.extras?['year'],
         'thumbnails': [
           {'url': mediaItem.artUri.toString()}
         ],

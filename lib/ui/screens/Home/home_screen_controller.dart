@@ -116,12 +116,15 @@ class HomeScreenController extends GetxController {
           quickPicks.value = QuickPicks(_mediaItemsFrom(con["contents"]),
               title: con["title"] ?? "Trending");
         } else if (index == -1) {
-          List charts = await _musicServices.getCharts();
-          final con =
-              charts.length == 4 ? charts.removeAt(3) : charts.removeAt(2);
-          quickPicks.value =
-              QuickPicks(_mediaItemsFrom(con["contents"]), title: con['title']);
-          middleContentTemp.addAll(charts);
+          List charts = await _musicServices.getCharts(contentType);
+          final chartIndex = charts.indexWhere(
+              (element) => element['title'] == "Trending");
+          if (chartIndex != -1) {
+            final con = charts[chartIndex];
+            quickPicks.value = QuickPicks(_mediaItemsFrom(con["contents"]),
+                title: con['title']);
+            middleContentTemp.addAll(charts);
+          }
         }
       } else if (contentType == "TMV") {
         final index = homeContentListMap
@@ -131,10 +134,15 @@ class HomeScreenController extends GetxController {
           quickPicks.value =
               QuickPicks(_mediaItemsFrom(con["contents"]), title: con["title"]);
         } else if (index == -1) {
-          List charts = await _musicServices.getCharts();
-          quickPicks.value = QuickPicks(_mediaItemsFrom(charts[0]["contents"]),
-              title: charts[0]["title"]);
-          middleContentTemp.addAll(charts.sublist(1));
+          List charts = await _musicServices.getCharts(contentType);
+          final chartIndex = charts.indexWhere(
+              (element) => element['title'] == "Top Music Videos");
+          if (chartIndex != -1) {
+            quickPicks.value = QuickPicks(
+                _mediaItemsFrom(charts[chartIndex]["contents"]),
+                title: charts[chartIndex]['title']);
+            middleContentTemp.addAll(charts);
+          }
         }
       } else if (contentType == "BOLI") {
         final songId = box.get("recentSongId");
@@ -222,15 +230,14 @@ class HomeScreenController extends GetxController {
           title: homeContentListMap[0]["title"]);
     } else if (val == "TMV" || val == 'TR') {
       try {
-        final charts = await _musicServices.getCharts();
-        final index = val == "TMV"
-            ? 0
-            : charts.length == 4
-                ? 3
-                : 2;
-        quickPicks_ = QuickPicks(
-            List<MediaItem>.from(charts[index]["contents"]),
-            title: charts[index]["title"]);
+        final charts = await _musicServices.getCharts(val);
+        final index = charts.indexWhere((element) =>
+            element['title'] == (val == "TMV" ? "Top Music Videos" : "Trending"));
+        if (index != -1) {
+          quickPicks_ = QuickPicks(
+              List<MediaItem>.from(charts[index]["contents"]),
+              title: charts[index]["title"]);
+        }
       } catch (e) {
         printERROR(
             "Seems ${val == "TMV" ? "Top music videos" : "Trending songs"} currently not available!");

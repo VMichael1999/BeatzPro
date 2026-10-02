@@ -8,6 +8,7 @@ import 'package:hive/hive.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
 import '/models/album.dart';
+import '/services/stream_service.dart';
 import '/services/utils.dart';
 import '../utils/helper.dart';
 import 'constant.dart';
@@ -162,11 +163,13 @@ class MusicServices extends getx.GetxService {
     return home;
   }
 
-  Future<List<Map<String, dynamic>>> getCharts({String? countryCode}) async {
+  Future<List<Map<String, dynamic>>> getCharts(String catogory,
+      {String? countryCode}) async {
     final List<Map<String, dynamic>> charts = [];
     final data = Map.from(_context);
 
     data['browseId'] = 'FEmusic_charts';
+    data['context']['client']["hl"] = 'en';
     if (countryCode != null) {
       data['formData'] = {
         'selectedValues': [countryCode]
@@ -176,10 +179,36 @@ class MusicServices extends getx.GetxService {
     final results = nav(response, single_column_tab + section_list);
     results.removeAt(0);
     for (dynamic result in results) {
-      charts.add(parseChartsItem(result));
+      if (nav(result, [
+            "musicCarouselShelfRenderer",
+            "header",
+            "musicCarouselShelfBasicHeaderRenderer",
+            ...title_text
+          ]) ==
+          "Video charts") {
+        for (dynamic item in result['musicCarouselShelfRenderer']['contents']) {
+          final chartItem =
+              await getChartItems(parseChartsItemBrowseId(item), catogory);
+          charts.add(chartItem);
+        }
+      } else {
+        continue;
+      }
     }
 
     return charts;
+  }
+
+  Future<Map<String, dynamic>> getChartItems(
+      Map<String, dynamic> item, String catogory) async {
+    final catString = catogory == "TMV" ? "Top Music Videos" : "Trending";
+    if ((item['title'])!.contains(catString)) {
+      final songs = (await getPlaylistOrAlbumSongs(
+          playlistId: item['browseId']))['tracks'];
+      final limitedSongs = songs.length > 24 ? songs.sublist(0, 24) : songs;
+      return {'title': item['title'], 'contents': limitedSongs};
+    }
+    return {'title': item['title'], 'contents': []};
   }
 
   Future<Map<String, dynamic>> getWatchPlaylist(
@@ -239,8 +268,10 @@ class MusicServices extends getx.GetxService {
         'watchNextTabbedResultsRenderer'
       ]);
 
-      lyricsBrowseId = getTabBrowseId(watchNextRenderer, 1);
-      relatedBrowseId = getTabBrowseId(watchNextRenderer, 2);
+      lyricsBrowseId =
+          getTabBrowseId(watchNextRenderer, 'MUSIC_PAGE_TYPE_TRACK_LYRICS');
+      relatedBrowseId =
+          getTabBrowseId(watchNextRenderer, 'MUSIC_PAGE_TYPE_TRACK_RELATED');
       if (onlyRelated) {
         return {
           'lyrics': lyricsBrowseId,
@@ -456,7 +487,8 @@ class MusicServices extends getx.GetxService {
     album['tracks'] = parsePlaylistItems(results['contents'],
         artistsM: album['artists'],
         thumbnailsM: album["thumbnails"],
-        albumIdM: albumId,
+        albumIdName: {"id": albumId, 'name': album['title']},
+        albumYear: album['year'],
         isAlbum: true);
     results = nav(
       response,
@@ -521,8 +553,8 @@ class MusicServices extends getx.GetxService {
       if (songId.substring(0, 4) == "MPED") {
         songId = songId.substring(4);
       }
-      final songStreamManifest =
-          await _yt.videos.streamsClient.getManifest(songId);
+      final songStreamManifest = await _yt.videos.streamsClient
+          .getManifest(songId, ytClients: playerClients);
       final streamUriList = songStreamManifest.audioOnly.sortByBitrate();
 
       // for (AudioOnlyStreamInfo x in streamUriList) {
@@ -555,7 +587,7 @@ class MusicServices extends getx.GetxService {
       final manifest = await _yt.videos.streamsClient.getManifest(
         songId,
         ytClients: [
-          YoutubeApiClient.androidVr,
+          ...playerClients,
           YoutubeApiClient.tv,
         ],
       );
@@ -655,6 +687,13 @@ class MusicServices extends getx.GetxService {
         }
       }
 
+      for (final section in ["Songs", "Videos", "Albums", "Artists"]) {
+        if ((searchResults['searchEndpoint']).containsKey(section) &&
+            !searchResults.containsKey(section)) {
+          searchResults[section] = [];
+        }
+      }
+
       if ((searchResults['searchEndpoint'])
               .containsKey("Community playlists") &&
           !searchResults.containsKey("Community playlists")) {
@@ -708,6 +747,33 @@ class MusicServices extends getx.GetxService {
               category);
         }
         type = typeFilter?.substring(0, typeFilter.length - 1).toLowerCase();
+      } else if (filter == null && res['itemSectionRenderer'] != null) {
+        // YouTube Music now wraps each mixed search result in its own
+        // itemSectionRenderer instead of a single musicShelfRenderer.
+        final itemResults = (res['itemSectionRenderer']['contents'] as List)
+            .where((e) => e['musicResponsiveListItemRenderer'] != null)
+            .toList();
+        final List<dynamic> mixedItems = [];
+        for (final itemResult in itemResults) {
+          try {
+            mixedItems.addAll(parseSearchResults([itemResult],
+                ['artist', 'playlist', 'song', 'video', 'station'], null, "mixed"));
+          } catch (e) {
+            // unsupported types (episodes, podcasts, profiles...) are skipped
+            printINFO("Search item skipped: $e");
+          }
+        }
+        for (var item in mixedItems) {
+          final itemType = item.runtimeType == MediaItem
+              ? _mediaItemSearchSection(item)
+              : "${item.runtimeType}s";
+          if (searchResults.containsKey(itemType)) {
+            (searchResults[itemType] as List).add(item);
+          } else {
+            searchResults[itemType] = [item];
+          }
+        }
+        continue;
       } else {
         continue;
       }
@@ -840,7 +906,7 @@ class MusicServices extends getx.GetxService {
     browseEndpoint.remove("content");
     if (browseEndpoint.isEmpty) return result;
     data.addAll(browseEndpoint);
-    dynamic response =
+    final response =
         (await _sendRequest("browse", data, additionalParams: additionalParams))
             .data;
     final contents = nav(response, [
@@ -857,8 +923,13 @@ class MusicServices extends getx.GetxService {
 
     if (category == "Songs" || category == "Videos") {
       if (additionalParams != "") {
-        final x = parsePlaylistItems(response['continuationContents']
-            ['musicPlaylistShelfContinuation']['contents']);
+        final contentList = nav(response, [
+          "onResponseReceivedActions",
+          0,
+          "appendContinuationItemsAction",
+          "continuationItems"
+        ]);
+        final x = parsePlaylistItems(contentList);
         result['results'] = x;
         result['additionalParams'] = "&ctoken=${null}&continuation=${null}";
       } else if (contents.containsKey("gridRenderer")) {
@@ -867,21 +938,61 @@ class MusicServices extends getx.GetxService {
             .toList();
         result['additionalParams'] = "&ctoken=${null}&continuation=${null}";
       } else {
-        final continuationKey = nav(contents, [
-          'musicPlaylistShelfRenderer',
+        final collapseContent =
+            nav(contents, ['musicPlaylistShelfRenderer', "collapsedItemCount"]);
+        if (collapseContent != null) {
+          final contentlist =
+              contents['musicPlaylistShelfRenderer']['contents'];
+          if (contentlist.length.toString() != collapseContent.toString()) {
+            final continuationItem = contentlist.removeAt(100);
+            result['results'] = parsePlaylistItems(contentlist);
+            final continuationKey = nav(continuationItem, [
+              "continuationItemRenderer",
+              "continuationEndpoint",
+              "continuationCommand",
+              "token"
+            ]);
+            result['additionalParams'] =
+                "&ctoken=$continuationKey&continuation=$continuationKey";
+          } else {
+            result['results'] = parsePlaylistItems(contentlist);
+            result['additionalParams'] = "&ctoken=null&continuation=null";
+          }
+        }
+        return result;
+      }
+    } else if (category == 'Albums' || category == 'Singles') {
+      List contentlist;
+
+      /// in continuation
+      if (additionalParams != "") {
+        contentlist =
+            response['continuationContents']['gridContinuation']['items'];
+        final continuationKey = nav(response, [
+          'continuationContents',
+          'gridContinuation',
           'continuations',
           0,
           'nextContinuationData',
           'continuation'
         ]);
-        final x = parsePlaylistItems(
-            contents['musicPlaylistShelfRenderer']['contents']);
-        result['results'] = x;
+        result['additionalParams'] =
+            "&ctoken=$continuationKey&continuation=$continuationKey";
+      } else {
+        /// in first request
+        contentlist = contents['gridRenderer']['items'];
+
+        final continuationKey = nav(contents, [
+          'gridRenderer',
+          'continuations',
+          0,
+          'nextContinuationData',
+          'continuation'
+        ]);
         result['additionalParams'] =
             "&ctoken=$continuationKey&continuation=$continuationKey";
       }
-    } else if (category == 'Albums' || category == 'Singles') {
-      final contentlist = contents['gridRenderer']['items'];
+
       result['results'] = category == 'Albums'
           ? contentlist
               .map((item) => parseAlbum(item['musicTwoRowItemRenderer']))
@@ -895,8 +1006,38 @@ class MusicServices extends getx.GetxService {
     return result;
   }
 
+  Future<String?> getSongYear(String songId) async {
+    final data = Map.from(_context);
+    data['browseId'] = "MPTC$songId";
+    try {
+      final response = (await _sendRequest('browse', data)).data;
+      String? year = nav(response, [
+        "onResponseReceivedActions",
+        0,
+        "openPopupAction",
+        "popup",
+        "dismissableDialogRenderer",
+        "metadata",
+        "musicMultiRowListItemRenderer",
+        "secondTitle",
+        "runs",
+        2,
+        "text"
+      ]);
+      return year;
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   void closeYtClient() {
     _yt.close();
+  }
+
+  @override
+  void onClose() {
+    dio.close();
+    super.onClose();
   }
 }
 

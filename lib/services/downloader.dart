@@ -16,6 +16,8 @@ import '../ui/screens/Settings/settings_screen_controller.dart';
 import '/utils/helper.dart';
 import '/models/media_Item_builder.dart';
 import '../ui/screens/Library/library_controller.dart';
+import 'music_service.dart';
+import 'yt_auth.dart';
 //import '../models/thumbnail.dart' as th;
 
 class Downloader extends GetxService {
@@ -143,7 +145,7 @@ class Downloader extends GetxService {
     final settingsScreenController = Get.find<SettingsScreenController>();
     final downloadingFormat = settingsScreenController.downloadingFormat.string;
 
-    final playerResponse = await StreamProvider.fetch(song.id);
+    final playerResponse = await StreamProvider.fetch(song.id, cookies: YtAuth.cookies);
     if (!playerResponse.playable) {
       printINFO("Requested song is not downloadable: "
           "${playerResponse.statusMSG}");
@@ -184,6 +186,15 @@ class Downloader extends GetxService {
     ).then((value) async {
       printINFO(value.data);
 
+      String? year;
+      try {
+        if (song.extras?['year'] != null) {
+          year = song.extras?['year'];
+        } else if (song.album != null) {
+          year = await Get.find<MusicServices>().getSongYear(song.id);
+        }
+      } catch (_) {}
+
       // Save Thumbnail
       try {
         final thumbnailPath =
@@ -201,6 +212,11 @@ class Downloader extends GetxService {
       Hive.box("SongDownloads").put(song.id, songJson);
       Get.find<LibrarySongsController>().librarySongsList.add(song);
       printINFO("Downloaded successfully");
+
+      final trackDetails = (song.extras?['trackDetails'])?.split("/");
+      final int? trackNumber = int.tryParse(trackDetails?[0] ?? "");
+      final int? totalTracks = int.tryParse(trackDetails?[1] ?? "");
+
       try {
         /// Reverted -- Removed AudioTags as using this package, app is flagged as TROJ_GEN.R002V01K623 by TrendMicro-HouseCall
         final imageUrl = song.artUri!.toString();
@@ -208,6 +224,9 @@ class Downloader extends GetxService {
             title: song.title,
             trackArtist: song.artist,
             album: song.album,
+            year: int.tryParse(year ?? ""),
+            trackNumber: trackNumber,
+            trackTotal: totalTracks,
             albumArtist: song.artist,
             genre: song.genre,
             pictures: [
