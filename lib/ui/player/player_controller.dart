@@ -687,12 +687,20 @@ class PlayerController extends GetxController {
     isSleepEndOfSongActive.value = true;
   }
 
+  /// When true, the sleep timer waits for the current song to end instead of
+  /// cutting the music the moment it expires.
+  bool sleepWaitsForSongEnd = false;
+
   void startSleepTimer(int minutes) {
     timerDuration = minutes * 60;
     isSleepTimerActive.value = true;
     if ((sleepTimer != null && !sleepTimer!.isActive) || sleepTimer == null) {
       sleepTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        if (timer.tick == timerDuration) {
+        if (timer.tick == timerDuration && sleepWaitsForSongEnd) {
+          sleepTimer?.cancel();
+          timerDuration = 0;
+          sleepEndOfSong();
+        } else if (timer.tick == timerDuration) {
           sleepTimer?.cancel();
           pause();
           isSleepTimerActive.value = false;
