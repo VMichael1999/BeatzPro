@@ -1,9 +1,10 @@
-import 'package:beatzpro/ui/utils/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../screens/Search/search_result_screen_controller.dart';
+import '../utils/beatz_design.dart';
 import '/ui/widgets/content_list_widget_item.dart';
+import 'beatz/beatz_widgets.dart';
 
 class ContentListWidget extends StatelessWidget {
   /// ContentListWidget is used to render a section of Content like a list of Albums or Playlists in HomeScreen
@@ -18,75 +19,47 @@ class ContentListWidget extends StatelessWidget {
     final isAlbumContent = content.runtimeType.toString() == "AlbumContent";
     final itemCount =
         isAlbumContent ? content.albumList.length : content.playlistList.length;
+    // three tiles per row, like the design
+    final tileWidth = (MediaQuery.of(context).size.width - 36 - 20) / 3;
+    final colors = context.beatz;
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 20.0),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 9),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  !isHomeContent && content.title.length > 12
-                      ? "${content.title.substring(0, 12)}..."
-                      : content.title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-              ),
-              if (!isHomeContent)
-                TextButton(
-                  onPressed: () {
-                    final scrresController =
-                        Get.find<SearchResultScreenController>();
-                    scrresController.viewAllCallback(content.title);
-                  },
-                  child: Text(
-                    "viewAll".tr,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color:
-                              Theme.of(context).primaryColor.withLightness(0.7),
-                        ),
-                  ),
-                ),
-            ],
+          BeatzSectionTitle(
+            content.title,
+            action: isHomeContent ? null : "viewAll".tr,
+            onAction: isHomeContent
+                ? null
+                : () => Get.find<SearchResultScreenController>()
+                    .viewAllCallback(content.title),
           ),
           if (itemCount > 0) ...[
             const SizedBox(height: 10),
             SizedBox(
-              height: 218,
+              height: tileWidth + 62,
               child: ListView.separated(
                 addAutomaticKeepAlives: false,
                 addRepaintBoundaries: false,
                 physics: const BouncingScrollPhysics(),
-                separatorBuilder: (context, index) => const SizedBox(width: 15),
+                separatorBuilder: (context, index) => const SizedBox(width: 10),
                 scrollDirection: Axis.horizontal,
                 itemCount: itemCount,
                 itemBuilder: (context, index) {
                   final item = isAlbumContent
                       ? content.albumList[index]
                       : content.playlistList[index];
-                  return ContentListItem(content: item);
+                  return ContentListItem(content: item, width: tileWidth);
                 },
               ),
             ),
-          ],
+          ] else
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('—', style: TextStyle(color: colors.muted)),
+            ),
         ],
       ),
     );

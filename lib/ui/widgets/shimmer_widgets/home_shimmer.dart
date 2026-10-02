@@ -1,97 +1,87 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import 'basic_container.dart';
+import '../../utils/beatz_design.dart';
 
+/// Loading skeleton with the same layout as the home screen.
 class HomeShimmer extends StatelessWidget {
   const HomeShimmer({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.beatz;
     return Shimmer.fromColors(
-        baseColor: Colors.grey[500]!,
-        highlightColor: Colors.grey[300]!,
-        enabled: true,
-        direction: ShimmerDirection.ltr,
-        child: Column(
-          children: [_discoverWidget(), _contentWidget(), _contentWidget()],
-        ));
-  }
-
-  Widget _discoverWidget() {
-    return SizedBox(
-      height: 320,
-      width: double.infinity,
+      baseColor: colors.surface,
+      highlightColor: colors.raised,
+      enabled: !MediaQuery.disableAnimationsOf(context),
+      direction: ShimmerDirection.ltr,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Align(
-            alignment: Alignment.centerLeft,
-            child: Padding(
-              padding: EdgeInsets.only(left: 5),
-              child: BasicShimmerContainer(Size(220, 30)),
-            ),
-          ),
+          _tiles(context),
+          const SizedBox(height: 22),
+          _title(160),
           const SizedBox(height: 10),
-          Expanded(
-            child: GridView.builder(
-                scrollDirection: Axis.horizontal,
-                itemCount: 20,
-                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 4,
-                  childAspectRatio: .26 / 1,
-                  crossAxisSpacing: 1,
-                  mainAxisSpacing: 5,
-                ),
-                itemBuilder: (_, item) {
-                  return const ListTile(
-                    contentPadding: EdgeInsetsDirectional.all(5),
-                    leading: BasicShimmerContainer(Size(50, 50)),
-                    title: BasicShimmerContainer(Size(90, 20)),
-                    subtitle: BasicShimmerContainer(Size(40, 15)),
-                  );
-                }),
-          ),
-          const SizedBox(height: 20)
+          for (var i = 0; i < 4; i++) _row(),
+          const SizedBox(height: 14),
+          _tiles(context),
         ],
       ),
     );
   }
 
-  Widget _contentWidget() {
+  Widget _box(double w, double h, {double r = 8}) => Container(
+        width: w,
+        height: h,
+        decoration: BoxDecoration(
+            color: Colors.white, borderRadius: BorderRadius.circular(r)),
+      );
+
+  Widget _title(double w) => _box(w, 20);
+
+  Widget _tiles(BuildContext context) {
+    final w = (MediaQuery.of(context).size.width - 36 - 20) / 3;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(left: 5),
-          child: BasicShimmerContainer(Size(220, 30)),
-        ),
+        _title(140),
         const SizedBox(height: 10),
-        SizedBox(
-          height: 200,
-          //color: Colors.blueAccent,
-          child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: 5,
-              itemBuilder: (_, index) {
-                return Container(
-                  width: 140,
-                  padding: const EdgeInsets.only(left: 5.0),
-                  child: const Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      SizedBox(
-                          height: 120,
-                          child: BasicShimmerContainer(Size(120, 120))),
-                      SizedBox(height: 5),
-                      BasicShimmerContainer(Size(115, 20)),
-                      SizedBox(height: 5),
-                      BasicShimmerContainer(Size(90, 15)),
-                    ],
-                  ),
-                );
-              }),
+        Row(
+          children: [
+            for (var i = 0; i < 3; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _box(w, w, r: 10),
+                  const SizedBox(height: 6),
+                  _box(w * 0.8, 12),
+                  const SizedBox(height: 4),
+                  _box(w * 0.5, 10),
+                ],
+              ),
+            ],
+          ],
         ),
       ],
     );
   }
+
+  Widget _row() => Padding(
+        padding: const EdgeInsets.symmetric(vertical: 7),
+        child: Row(
+          children: [
+            _box(44, 44),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _box(150, 14),
+                const SizedBox(height: 6),
+                _box(90, 11),
+              ],
+            ),
+          ],
+        ),
+      );
 }

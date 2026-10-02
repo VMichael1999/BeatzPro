@@ -2,114 +2,129 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../navigator.dart';
+import '../utils/beatz_design.dart';
+import 'beatz/beatz_icon.dart';
 import 'image_widget.dart';
 
+/// Album / playlist tile (`.tile` in the design): square cover, title and a
+/// muted line below.
 class ContentListItem extends StatelessWidget {
   const ContentListItem(
-      {super.key, required this.content, this.isLibraryItem = false});
+      {super.key,
+      required this.content,
+      this.isLibraryItem = false,
+      this.width = 120});
 
   ///content will be of Type class Album or Playlist
   final dynamic content;
   final bool isLibraryItem;
+  final double width;
 
   @override
   Widget build(BuildContext context) {
+    final colors = context.beatz;
     final isAlbum = content.runtimeType.toString() == "Album";
+    final subtitle = isAlbum
+        ? isLibraryItem
+            ? ""
+            : "${content.artists[0]['name'] ?? ""} · ${content.year ?? ""}"
+        : isLibraryItem
+            ? ""
+            : content.description ?? "";
     return InkWell(
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
+      borderRadius: BorderRadius.circular(10),
       onTap: () {
         Get.toNamed(ScreenNavigationSetup.playlistNAlbumScreen,
             id: ScreenNavigationSetup.id, arguments: [isAlbum, content, false]);
       },
-      child: Container(
-        width: 120,
-        padding: const EdgeInsets.all(0),
+      child: SizedBox(
+        width: width,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            isAlbum
-                ? ImageWidget(
-                    size: 120,
-                    album: content,
-                  )
-                : content.isCloudPlaylist
-                    ? SizedBox.square(
-                        dimension: 120,
-                        child: Stack(
-                          children: [
-                            ImageWidget(
-                              size: 120,
-                              playlist: content,
-                            ),
-                            if (content.isPipedPlaylist)
-                              Align(
-                                alignment: Alignment.bottomRight,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Container(
-                                    height: 18,
-                                    width: 18,
-                                    decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(5),
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .secondary,
-                                    ),
-                                    child: Center(
-                                        child: Text(
-                                      "P",
-                                      style: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium!
-                                          .copyWith(fontSize: 14),
-                                    )),
-                                  ),
-                                ),
-                              )
-                          ],
-                        ),
-                      )
-                    : Container(
-                        height: 120,
-                        width: 120,
-                        decoration: BoxDecoration(
-                            color: Theme.of(context).primaryColorLight,
-                            borderRadius: BorderRadius.circular(10)),
-                        child: Center(
-                            child: Icon(
-                          content.playlistId == 'LIBRP'
-                              ? Icons.history_rounded
-                              : content.playlistId == 'LIBFAV'
-                                  ? Icons.favorite_rounded
-                                  : content.playlistId == 'SongsCache'
-                                      ? Icons.flight_rounded
-                                      : content.playlistId == 'SongDownloads'
-                                          ? Icons.download
-                                          : Icons.playlist_play_rounded,
-                          color: Colors.white,
-                          size: 40,
-                        ))),
-            const SizedBox(height: 5),
+            _cover(context, colors, isAlbum),
+            const SizedBox(height: 6),
             Text(
               content.title,
-              // overflow: TextOverflow.ellipsis,
               maxLines: 2,
-              style: Theme.of(context).textTheme.titleMedium,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                  height: 1.25,
+                  color: colors.ink),
             ),
-            Text(
-              isAlbum
-                  ? isLibraryItem
-                      ? ""
-                      : "${content.artists[0]['name'] ?? ""} | ${content.year ?? ""}"
-                  : isLibraryItem
-                      ? ""
-                      : content.description ?? "",
-              maxLines: 1,
-              style: Theme.of(context).textTheme.titleSmall,
-            ),
+            if (subtitle.toString().isNotEmpty)
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                    fontSize: 12, height: 1.25, color: colors.muted),
+              ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _cover(BuildContext context, BeatzColors colors, bool isAlbum) {
+    if (isAlbum) {
+      return ImageWidget(size: width, album: content);
+    }
+    if (content.isCloudPlaylist) {
+      return SizedBox.square(
+        dimension: width,
+        child: Stack(
+          children: [
+            ImageWidget(size: width, playlist: content),
+            if (content.isPipedPlaylist)
+              Align(
+                alignment: Alignment.bottomRight,
+                child: Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    height: 18,
+                    width: 18,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(5),
+                      color: colors.raised,
+                    ),
+                    child: Center(
+                        child: Text("P",
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                                color: colors.ink))),
+                  ),
+                ),
+              )
+          ],
+        ),
+      );
+    }
+    final id = content.playlistId;
+    final icon = id == 'LIBRP'
+        ? 'radio'
+        : id == 'LIBFAV'
+            ? 'heart'
+            : id == 'SongsCache'
+                ? 'db'
+                : id == 'SongDownloads'
+                    ? 'dl'
+                    : 'queue';
+    return Container(
+      height: width,
+      width: width,
+      decoration: BoxDecoration(
+          color: colors.surface, borderRadius: BorderRadius.circular(10)),
+      child: Center(
+        child: BeatzIcon(icon,
+            size: 32,
+            color: id == 'LIBFAV' ? BeatzColors.heart : colors.ink,
+            filled: id == 'LIBFAV'),
       ),
     );
   }

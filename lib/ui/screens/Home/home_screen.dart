@@ -14,6 +14,13 @@ import '../../widgets/content_list_widget.dart';
 import '../../widgets/quickpickswidget.dart';
 import '../../widgets/shimmer_widgets/home_shimmer.dart';
 import 'home_screen_controller.dart';
+import '/models/media_Item_builder.dart';
+import '/models/playlist.dart';
+import '/ui/utils/beatz_design.dart';
+import '/ui/widgets/beatz/beatz_icon.dart';
+import '/ui/widgets/beatz/beatz_widgets.dart';
+import '/ui/widgets/image_widget.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../Settings/settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -105,69 +112,57 @@ class Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final homeScreenController = Get.find<HomeScreenController>();
     final settingsScreenController = Get.find<SettingsScreenController>();
-    final size = MediaQuery.of(context).size;
-    final topPadding = size.height < 750 ? 80.0 : 85.0;
-    final leftPadding =
-        settingsScreenController.isBottomNavBarEnabled.isTrue ? 20.0 : 5.0;
+    final colors = context.beatz;
     if (homeScreenController.tabIndex.value == 0) {
-      return Padding(
-        padding: EdgeInsets.only(left: leftPadding),
+      return SafeArea(
+        bottom: false,
         child: Obx(
           () => homeScreenController.networkError.isTrue
-              ? SizedBox(
-                  height: MediaQuery.of(context).size.height - 180,
-                  child: Column(
-                    children: [
-                      Align(
-                        alignment: Alignment.topLeft,
-                        child: Text(
-                          "home".tr,
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                      ),
-                      Expanded(
-                        child: Center(
-                          child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  "networkError1".tr,
-                                  style:
-                                      Theme.of(context).textTheme.titleMedium,
-                                ),
-                                const SizedBox(
-                                  height: 10,
-                                ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 15, vertical: 10),
-                                  decoration: BoxDecoration(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .titleLarge!
-                                          .color,
-                                      borderRadius: BorderRadius.circular(10)),
-                                  child: InkWell(
-                                    onTap: () {
-                                      homeScreenController
-                                          .loadContentFromNetwork();
-                                    },
+              ? Column(
+                  children: [
+                    const _HomeHeader(),
+                    Expanded(
+                      child: Center(
+                        child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              BeatzIcon('radio', size: 32, color: colors.muted),
+                              const SizedBox(height: 12),
+                              Text(
+                                "networkError1".tr,
+                                style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: colors.ink),
+                              ),
+                              const SizedBox(height: 14),
+                              Material(
+                                color: colors.ink,
+                                borderRadius: BorderRadius.circular(24),
+                                child: InkWell(
+                                  borderRadius: BorderRadius.circular(24),
+                                  onTap:
+                                      homeScreenController.loadContentFromNetwork,
+                                  child: Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 22, vertical: 12),
                                     child: Text(
                                       "retry".tr,
                                       style: TextStyle(
-                                          color: Theme.of(context).canvasColor),
+                                          fontWeight: FontWeight.w800,
+                                          color: colors.bg),
                                     ),
                                   ),
                                 ),
-                              ]),
-                        ),
-                      )
-                    ],
-                  ),
+                              ),
+                            ]),
+                      ),
+                    )
+                  ],
                 )
               : Obx(() {
                   final items = homeScreenController.isContentFetched.value
                       ? [
+                          const _ContinueListening(),
                           Obx(() => QuickPicksWidget(
                               content: homeScreenController.quickPicks.value)),
                           ...getWidgetList(homeScreenController.middleContent),
@@ -177,9 +172,10 @@ class Body extends StatelessWidget {
                         ]
                       : [const HomeShimmer()];
                   return ListView.builder(
-                    padding: EdgeInsets.only(bottom: 200, top: topPadding),
-                    itemCount: items.length,
-                    itemBuilder: (context, index) => items[index],
+                    padding: const EdgeInsets.fromLTRB(18, 0, 18, 110),
+                    itemCount: items.length + 1,
+                    itemBuilder: (context, index) =>
+                        index == 0 ? const _HomeHeader() : items[index - 1],
                   );
                 }),
         ),
@@ -212,5 +208,121 @@ class Body extends StatelessWidget {
         .map((content) => ContentListWidget(content: content))
         .whereType<Widget>()
         .toList();
+  }
+}
+
+
+class _HomeHeader extends StatelessWidget {
+  const _HomeHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = context.beatz;
+    return Padding(
+      padding: const EdgeInsets.only(top: 14, bottom: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text("home".tr,
+              style: TextStyle(
+                  fontSize: 26,
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.5,
+                  color: colors.ink)),
+          BeatzIconButton(
+            icon: 'radio',
+            tooltip: 'Historial',
+            background: colors.surface,
+            onPressed: () => Get.toNamed(
+                ScreenNavigationSetup.playlistNAlbumScreen,
+                id: ScreenNavigationSetup.id,
+                arguments: [
+                  false,
+                  Playlist(
+                      title: "recentlyPlayed".tr,
+                      playlistId: "LIBRP",
+                      thumbnailUrl: "",
+                      isCloudPlaylist: false),
+                  false
+                ]),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// "Sigue escuchando": the last three songs of the recently played list.
+class _ContinueListening extends StatelessWidget {
+  const _ContinueListening();
+
+  @override
+  Widget build(BuildContext context) {
+    final player = Get.find<PlayerController>();
+    final tileWidth = (MediaQuery.of(context).size.width - 36 - 20) / 3;
+    final colors = context.beatz;
+    return FutureBuilder<Box>(
+      future: Hive.openBox("LIBRP"),
+      builder: (context, snapshot) {
+        final box = snapshot.data;
+        if (box == null) return const SizedBox.shrink();
+        return ValueListenableBuilder<Box>(
+          valueListenable: box.listenable(),
+          builder: (context, box, _) {
+            final songs = box.values
+                .toList()
+                .reversed
+                .take(3)
+                .map((e) => MediaItemBuilder.fromJson(e))
+                .toList();
+            if (songs.isEmpty) return const SizedBox.shrink();
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 9),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const BeatzSectionTitle('Sigue escuchando'),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      for (var i = 0; i < songs.length; i++) ...[
+                        if (i > 0) const SizedBox(width: 10),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(10),
+                          onTap: () => player.pushSongToQueue(songs[i]),
+                          child: SizedBox(
+                            width: tileWidth,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                ImageWidget(size: tileWidth, song: songs[i]),
+                                const SizedBox(height: 6),
+                                Text(songs[i].title,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 13,
+                                        height: 1.25,
+                                        color: colors.ink)),
+                                Text(songs[i].artist ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                        fontSize: 12, color: colors.muted)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 }
